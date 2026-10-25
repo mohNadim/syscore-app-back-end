@@ -54,7 +54,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof ModelNotFoundException,
                 $e instanceof NotFoundHttpException => response()->json(['message' => __('api.not_found')], 404),
                 $e instanceof MethodNotAllowedHttpException => response()->json(['message' => __('api.method_not_allowed')], 405, $headers),
-                $e instanceof TooManyRequestsHttpException => response()->json(['message' => __('api.too_many_requests')], 429, $headers),
+                $e instanceof TooManyRequestsHttpException => response()->json(array_filter([
+                    'message' => __('api.too_many_requests'),
+                    'retry_after' => isset($headers['Retry-After']) ? (int) $headers['Retry-After'] : null,
+                ], fn ($value) => $value !== null), 429, $headers),
                 $e instanceof ValidationException => response()->json([
                     'message' => __('api.validation_failed'),
                     'errors' => $e->errors(),

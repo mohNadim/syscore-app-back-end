@@ -93,6 +93,6 @@ class ApiErrorFormatTest extends TestCase
         $this->getJson('/api/v1/_test/throttled')
             ->assertStatus(429)
             ->assertHeader('Retry-After')
-            ->assertExactJson(['message' => trans('api.too_many_requests', [], 'ar')]);
+            ->assertExactJson(['message' => trans('api.too_many_requests', [], 'ar'), 'retry_after' => 60]);
     }
 }
