@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
+use App\Http\Controllers\Api\V1\Admin\SportController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\ChildController;
@@ -54,6 +55,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::apiResource('facilities.spaces', SpaceController::class)->shallow();
                 Route::apiResource('bookable-units', BookableUnitController::class);
                 Route::put('bookable-units/{bookable_unit}/sports', [BookableUnitController::class, 'syncSports'])->name('bookable-units.sports');
+            });
+
+            Route::middleware('permission:'.PermissionCode::SportsManage->value)->group(function () {
+                Route::apiResource('sports', SportController::class);
             });
         });
     });
