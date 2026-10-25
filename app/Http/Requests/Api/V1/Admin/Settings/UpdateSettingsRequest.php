@@ -27,6 +27,7 @@ class UpdateSettingsRequest extends FormRequest
         'otp.max_attempts' => ['sometimes', 'integer', 'between:1,10'],
         'otp.resend_cooldown_seconds' => ['sometimes', 'integer', 'between:10,600'],
         'subscription.expiry_reminder_days' => ['sometimes', 'integer', 'between:0,30'],
+        'academy.session_generation_days' => ['sometimes', 'integer', 'between:1,180'],
         'app.display_timezone' => ['sometimes', 'string', 'timezone:all'],
         'app.contact' => ['sometimes', 'array'],
     ];

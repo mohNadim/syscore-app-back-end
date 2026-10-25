@@ -23,6 +23,7 @@ class SettingStore
         'otp.max_attempts' => 5,
         'otp.resend_cooldown_seconds' => 60,
         'subscription.expiry_reminder_days' => 7,
+        'academy.session_generation_days' => 28,
         'app.display_timezone' => 'Asia/Damascus',
         'app.contact' => [
             'phone' => null,

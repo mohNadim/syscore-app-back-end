@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\ScheduleConflictException;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\EnsureUser;
@@ -63,6 +64,10 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => __('api.validation_failed'),
                     'errors' => $e->errors(),
                 ], 422),
+                $e instanceof ScheduleConflictException => response()->json([
+                    'message' => $e->getMessage(),
+                    'conflicts' => $e->conflicts,
+                ], 409),
                 $e instanceof ConflictHttpException => response()->json([
                     'message' => $e->getMessage() !== '' ? $e->getMessage() : __('api.conflict'),
                 ], 409),
