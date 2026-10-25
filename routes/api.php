@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
 use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
+use App\Http\Controllers\Api\V1\BookingQuoteController;
 use App\Http\Controllers\Api\V1\Catalog\AcademyController;
 use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
 use App\Http\Controllers\Api\V1\Catalog\CoachController;
@@ -47,6 +48,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('news/{news}', [NewsController::class, 'show'])->whereNumber('news')->name('news.show');
     Route::get('gallery/albums', [GalleryAlbumController::class, 'index'])->name('gallery.albums.index');
     Route::get('gallery/albums/{album}', [GalleryAlbumController::class, 'show'])->name('gallery.albums.show');
+    Route::get('bookings/quote', [BookingQuoteController::class, 'show'])->name('bookings.quote');
     Route::get('app-config', [AppConfigController::class, 'show'])->name('app-config.show');
 
     Route::prefix('auth')->name('auth.')->group(function () {
