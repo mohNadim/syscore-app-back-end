@@ -38,6 +38,7 @@ class AvailabilityService
 
         $units = $facility->units()
             ->where('is_active', true)
+            ->whereHas('spaces')
             ->when($sportId !== null, fn ($query) => $query->whereHas('sports', fn ($sports) => $sports->where('sports.id', $sportId)))
             ->with(['spaces', 'sports'])
             ->orderBy('sort_order')

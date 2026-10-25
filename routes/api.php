@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
 use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
+use App\Http\Controllers\Api\V1\BookingController;
 use App\Http\Controllers\Api\V1\BookingQuoteController;
 use App\Http\Controllers\Api\V1\Catalog\AcademyController;
 use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
@@ -64,6 +65,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::patch('me', [ProfileController::class, 'update'])->name('me.update');
 
         Route::apiResource('children', ChildController::class);
+
+        Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
+        Route::get('bookings/{booking}', [BookingController::class, 'show'])->whereNumber('booking')->name('bookings.show');
+        Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->whereNumber('booking')->name('bookings.cancel');
 
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
         Route::delete('devices', [DeviceController::class, 'destroy'])->name('devices.destroy');
