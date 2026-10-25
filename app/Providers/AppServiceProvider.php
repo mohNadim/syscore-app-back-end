@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Services\Otp\LogOtpSender;
 use App\Services\Otp\OtpSender;
 use App\Services\Otp\PhoneNumber;
+use App\Services\Pricing\DiscountSelectionStrategy;
+use App\Services\Pricing\HighestDiscountStrategy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(OtpSender::class, LogOtpSender::class);
+        $this->app->bind(DiscountSelectionStrategy::class, HighestDiscountStrategy::class);
     }
 
     /**
