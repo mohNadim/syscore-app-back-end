@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
 use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
+use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\WaitlistController as AdminWaitlistController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
@@ -185,6 +186,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::get('user-categories/{user_category}/members', [UserCategoryController::class, 'members'])->name('user-categories.members.index');
                 Route::post('user-categories/{user_category}/members', [UserCategoryController::class, 'addMembers'])->name('user-categories.members.store');
                 Route::delete('user-categories/{user_category}/members/{user}', [UserCategoryController::class, 'removeMember'])->name('user-categories.members.destroy');
+            });
+
+            Route::middleware('permission:'.PermissionCode::MembersView->value)->group(function () {
+                Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+                Route::get('users/{user}', [AdminUserController::class, 'show'])->whereNumber('user')->name('users.show');
+                Route::get('users/{user}/children', [AdminUserController::class, 'children'])->whereNumber('user')->name('users.children.index');
+            });
+
+            Route::middleware('permission:'.PermissionCode::MembersManage->value)->group(function () {
+                Route::put('users/{user}', [AdminUserController::class, 'update'])->whereNumber('user')->name('users.update');
+                Route::put('users/{user}/children/{child}', [AdminUserController::class, 'updateChild'])->whereNumber(['user', 'child'])->name('users.children.update');
+                Route::put('users/{user}/categories', [AdminUserController::class, 'syncCategories'])->whereNumber('user')->name('users.categories.sync');
             });
 
             Route::middleware('permission:'.PermissionCode::DiscountsManage->value)->group(function () {
