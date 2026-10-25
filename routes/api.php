@@ -36,7 +36,9 @@ use App\Http\Controllers\Api\V1\Catalog\NewsController;
 use App\Http\Controllers\Api\V1\Catalog\SportController as CatalogSportController;
 use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\WaitlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -68,6 +70,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::patch('me', [ProfileController::class, 'update'])->name('me.update');
 
         Route::apiResource('children', ChildController::class);
+        Route::get('children/{child}/eligible-groups', [EnrollmentController::class, 'eligibleGroups'])->whereNumber('child')->name('children.eligible-groups');
+
+        Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
+        Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
+        Route::get('waitlist', [WaitlistController::class, 'index'])->name('waitlist.index');
+        Route::delete('waitlist/{waitlist_entry}', [WaitlistController::class, 'destroy'])->whereNumber('waitlist_entry')->name('waitlist.destroy');
 
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['child_id', 'group_id', 'status', 'enrolled_at', 'ended_at', 'created_by_staff_id'])]
 class Enrollment extends Model
@@ -60,5 +61,13 @@ class Enrollment extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class, 'enrollment_id');
+    }
+
+    /**
+     * @return HasOne<Subscription, $this>
+     */
+    public function latestSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class, 'enrollment_id')->latestOfMany();
     }
 }
