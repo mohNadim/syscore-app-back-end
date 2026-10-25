@@ -20,6 +20,7 @@ class ChildResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'user' => new UserResource($this->whenLoaded('user')),
             'full_name' => $this->full_name,
             'birth_date' => $this->birth_date->toDateString(),
             'age' => $this->birth_date->age,

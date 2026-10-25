@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class EnrollmentService
 {
@@ -132,6 +133,84 @@ class EnrollmentService
             }
 
             return new EnrollResult(enrollment: $this->createEnrollment($child, $locked, $staff));
+        });
+    }
+
+    /**
+     * End an active enrollment now: unpaid subscriptions and the running one are cancelled, which frees the seat.
+     *
+     * @todo Refund of the running subscription is handled in phase 8.
+     *
+     * @throws UnprocessableEntityHttpException when the enrollment is not active
+     */
+    public function end(Enrollment $enrollment, ?string $reason = null): Enrollment
+    {
+        return DB::transaction(function () use ($enrollment, $reason): Enrollment {
+            $locked = Enrollment::query()->lockForUpdate()->findOrFail($enrollment->id);
+
+            if ($locked->status !== 'active') {
+                throw new UnprocessableEntityHttpException(__('admin_enrollments.not_endable'));
+            }
+
+            foreach ($locked->subscriptions()->whereIn('status', ['pending_payment', 'active'])->get() as $subscription) {
+                $subscription->update(['status' => 'cancelled']);
+                $this->audit->logChange('subscription.cancelled', $subscription);
+            }
+
+            $locked->update(['status' => 'ended', 'ended_at' => now()]);
+            $this->audit->log('enrollment.ended', $locked, ['status' => 'active'], ['status' => 'ended', 'reason' => $reason]);
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Offer a free seat to a waiting child; the seat is held until the child enrolls or the offer is withdrawn.
+     *
+     * @todo Notify the parent (phase 13) and expire unanswered offers (phase 11).
+     *
+     * @throws UnprocessableEntityHttpException when the entry is not waiting
+     * @throws ConflictHttpException when the group has no free seat
+     */
+    public function offer(WaitlistEntry $entry): WaitlistEntry
+    {
+        return DB::transaction(function () use ($entry): WaitlistEntry {
+            $group = AcademyGroup::query()->lockForUpdate()->findOrFail($entry->group_id);
+            $locked = WaitlistEntry::query()->lockForUpdate()->findOrFail($entry->id);
+
+            if ($locked->status !== 'waiting') {
+                throw new UnprocessableEntityHttpException(__('admin_enrollments.not_offerable'));
+            }
+
+            if ($this->seatsLeft($group) <= 0) {
+                throw new ConflictHttpException(__('admin_enrollments.no_free_seat'));
+            }
+
+            $locked->update(['status' => 'offered', 'offered_at' => now()]);
+            $this->audit->logChange('waitlist.offered', $locked);
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Remove a waiting or offered entry from the waitlist.
+     *
+     * @throws UnprocessableEntityHttpException when the entry is already finished
+     */
+    public function removeFromWaitlist(WaitlistEntry $entry): WaitlistEntry
+    {
+        return DB::transaction(function () use ($entry): WaitlistEntry {
+            $locked = WaitlistEntry::query()->lockForUpdate()->findOrFail($entry->id);
+
+            if (! in_array($locked->status, ['waiting', 'offered'], true)) {
+                throw new UnprocessableEntityHttpException(__('admin_enrollments.not_removable'));
+            }
+
+            $locked->update(['status' => 'removed']);
+            $this->audit->logChange('waitlist.removed', $locked);
+
+            return $locked->refresh();
         });
     }
 
