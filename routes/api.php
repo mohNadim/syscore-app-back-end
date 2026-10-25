@@ -93,6 +93,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::post('payments/sham-cash/initiate', [PaymentController::class, 'initiateShamCash'])->name('payments.sham-cash.initiate');
         Route::get('payments/{payment}', [PaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
+        Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->whereNumber('payment')->name('payments.receipt');
 
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
@@ -195,6 +196,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::middleware('permission:'.PermissionCode::PaymentsView->value)->group(function () {
                 Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
                 Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
+                Route::get('payments/{payment}/receipt', [AdminPaymentController::class, 'receipt'])->whereNumber('payment')->name('payments.receipt');
             });
 
             Route::post('payments', [AdminPaymentController::class, 'store'])->middleware('permission:'.PermissionCode::PaymentsManage->value)->name('payments.store');

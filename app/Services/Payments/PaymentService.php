@@ -235,6 +235,18 @@ class PaymentService
     }
 
     /**
+     * Ensure a payment has settled money and can therefore be shown as a receipt.
+     *
+     * @throws UnprocessableEntityHttpException when the payment has no receipt yet
+     */
+    public function ensureReceiptAvailable(Payment $payment): void
+    {
+        if (! in_array($payment->status, ['succeeded', 'partially_refunded', 'refunded'], true)) {
+            throw new UnprocessableEntityHttpException(__('payments.receipt_unavailable'));
+        }
+    }
+
+    /**
      * Refund part or all of a succeeded payment.
      *
      * @throws UnprocessableEntityHttpException when the payment is not refundable or the amount is too high
