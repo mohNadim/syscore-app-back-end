@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\ChildController;
+use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::patch('me', [ProfileController::class, 'update'])->name('me.update');
 
         Route::apiResource('children', ChildController::class);
+
+        Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
+        Route::delete('devices', [DeviceController::class, 'destroy'])->name('devices.destroy');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
