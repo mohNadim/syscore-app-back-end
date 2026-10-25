@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Admin\Payments\IndexPaymentRequest;
 use App\Http\Requests\Api\V1\Admin\Payments\StorePaymentRequest;
 use App\Http\Requests\Api\V1\Admin\Payments\StoreRefundRequest;
 use App\Http\Resources\AdminPaymentResource;
+use App\Http\Resources\ReceiptResource;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -24,6 +25,13 @@ class PaymentController extends Controller
      * @var list<string>
      */
     private const WITH = ['user', 'recordedByStaff', 'refunds'];
+
+    /**
+     * Relations loaded for a receipt.
+     *
+     * @var list<string>
+     */
+    private const RECEIPT_WITH = ['user', 'recordedByStaff', 'refunds', 'booking.unit', 'subscription.enrollment.child', 'subscription.enrollment.group.academy'];
 
     /**
      * List payments, newest first, filtered by status, method, purpose, target, customer, local date range and receipt number or payer phone.
@@ -58,6 +66,18 @@ class PaymentController extends Controller
     public function show(Payment $payment): AdminPaymentResource
     {
         return new AdminPaymentResource($payment->load(self::WITH));
+    }
+
+    /**
+     * Show the receipt of a settled payment, regardless of its customer.
+     *
+     * @throws UnprocessableEntityHttpException when the payment has no receipt yet
+     */
+    public function receipt(Payment $payment, PaymentService $payments): ReceiptResource
+    {
+        $payments->ensureReceiptAvailable($payment);
+
+        return new ReceiptResource($payment->load(self::RECEIPT_WITH));
     }
 
     /**

@@ -11,6 +11,7 @@ return [
     'amount_must_match_price' => 'The amount must equal the subscription price.',
     'invalid_signature' => 'The webhook signature is invalid.',
     'number_generation_failed' => 'A receipt number could not be generated. Please try again.',
+    'receipt_unavailable' => 'No receipt is available for this payment.',
 
     'validation' => [
         'target_required' => 'Send either a booking_id or a subscription_id.',

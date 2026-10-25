@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Payments\IndexPaymentRequest;
 use App\Http\Requests\Api\V1\Payments\InitiateShamCashPaymentRequest;
 use App\Http\Resources\PaymentResource;
+use App\Http\Resources\ReceiptResource;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -16,6 +17,13 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class PaymentController extends Controller
 {
+    /**
+     * Relations loaded for a receipt.
+     *
+     * @var list<string>
+     */
+    private const RECEIPT_WITH = ['user', 'recordedByStaff', 'refunds', 'booking.unit', 'subscription.enrollment.child', 'subscription.enrollment.group.academy'];
+
     /**
      * List the authenticated user's payments, newest first.
      */
@@ -37,6 +45,20 @@ class PaymentController extends Controller
         abort_unless($payment->user_id === request()->user()->id, 404);
 
         return new PaymentResource($payment);
+    }
+
+    /**
+     * Show the receipt of one of the user's settled payments.
+     *
+     * @throws UnprocessableEntityHttpException when the payment has no receipt yet
+     */
+    public function receipt(Payment $payment, PaymentService $payments): ReceiptResource
+    {
+        abort_unless($payment->user_id === request()->user()->id, 404);
+
+        $payments->ensureReceiptAvailable($payment);
+
+        return new ReceiptResource($payment->load(self::RECEIPT_WITH));
     }
 
     /**

@@ -11,6 +11,7 @@ return [
     'amount_must_match_price' => 'يجب أن يساوي المبلغ سعر الاشتراك.',
     'invalid_signature' => 'توقيع الإشعار غير صالح.',
     'number_generation_failed' => 'تعذر إنشاء رقم الإيصال. حاول مرة أخرى.',
+    'receipt_unavailable' => 'لا يتوفر إيصال لهذه الدفعة.',
 
     'validation' => [
         'target_required' => 'أرسل booking_id أو subscription_id.',
