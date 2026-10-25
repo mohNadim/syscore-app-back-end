@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\Admin\SettingController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\SportController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
+use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\Catalog\AcademyController;
 use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
@@ -97,6 +98,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::apiResource('academies', AdminAcademyController::class);
                 Route::apiResource('academies.groups', AcademyGroupController::class)->shallow();
                 Route::apiResource('groups.schedules', GroupScheduleController::class)->shallow();
+            });
+
+            Route::middleware('permission:'.PermissionCode::SessionsManage->value)->group(function () {
+                Route::get('training-sessions', [TrainingSessionController::class, 'index'])->name('training-sessions.index');
+                Route::get('training-sessions/{training_session}', [TrainingSessionController::class, 'show'])->name('training-sessions.show');
+                Route::patch('training-sessions/{training_session}', [TrainingSessionController::class, 'update'])->name('training-sessions.update');
+                Route::post('training-sessions/{training_session}/cancel', [TrainingSessionController::class, 'cancel'])->name('training-sessions.cancel');
             });
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
