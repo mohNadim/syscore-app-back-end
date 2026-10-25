@@ -159,7 +159,7 @@ class AdminPriceRulesTest extends TestCase
     {
         $this->actingAsPricingManager();
         $unit = BookableUnit::factory()->create();
-        $rule = $this->rule($unit);
+        $rule = $this->rule($unit, ['price_per_hour' => 120000]);
 
         $this->getJson(self::URL."/{$rule->id}")
             ->assertOk()
