@@ -9,6 +9,7 @@ use App\Models\BookableUnit;
 use App\Models\Closure;
 use App\Models\Coach;
 use App\Models\Facility;
+use App\Models\OperatingHour;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Space;
@@ -59,6 +60,10 @@ class AdminTrainingSessionsTest extends TestCase
         $this->halfUnit->spaces()->attach([$this->spaceA->id]);
         $this->fullUnit->sports()->attach($this->sport->id);
         $this->halfUnit->sports()->attach($this->sport->id);
+
+        foreach (range(0, 6) as $weekday) {
+            OperatingHour::factory()->create(['facility_id' => $this->facility->id, 'weekday' => $weekday, 'open_time' => '08:00', 'close_time' => '23:00']);
+        }
 
         $academy = Academy::factory()->create(['sport_id' => $this->sport->id]);
         $this->group = AcademyGroup::factory()->create(['academy_id' => $academy->id]);
@@ -307,6 +312,35 @@ class AdminTrainingSessionsTest extends TestCase
 
         $this->assertSame('scheduled', $session->fresh()->status);
         $this->assertSame(2, SpaceReservation::query()->where('session_id', $session->id)->where('is_active', true)->count());
+    }
+
+    public function test_reschedule_outside_operating_hours_returns_422(): void
+    {
+        $this->actingAsSessionsManager();
+        $session = $this->makeSession();
+        OperatingHour::query()->where('facility_id', $this->facility->id)->where('weekday', 5)->delete();
+
+        $cases = [
+            ['2026-10-29 07:00', '2026-10-29 08:30'],
+            ['2026-10-29 22:30', '2026-10-29 23:30'],
+            ['2026-10-29 23:00', '2026-10-30 00:30'],
+            ['2026-10-30 18:00', '2026-10-30 19:00'],
+        ];
+
+        foreach ($cases as [$startsAt, $endsAt]) {
+            $this->patchJson($this->sessionUrl($session), ['starts_at' => $startsAt, 'ends_at' => $endsAt, 'change_reason' => 'x'])
+                ->assertUnprocessable()
+                ->assertJsonPath('errors.starts_at.0', __('admin_sessions.outside_operating_hours', [], 'ar'));
+        }
+
+        $this->withHeader('Accept-Language', 'en')
+            ->patchJson($this->sessionUrl($session), ['starts_at' => '2026-10-29 07:00', 'ends_at' => '2026-10-29 08:30', 'change_reason' => 'x'])
+            ->assertJsonPath('errors.starts_at.0', __('admin_sessions.outside_operating_hours', [], 'en'));
+
+        $this->patchJson($this->sessionUrl($session), ['starts_at' => '2026-10-29 22:00', 'ends_at' => '2026-10-29 23:00', 'change_reason' => 'x'])
+            ->assertOk();
+
+        $this->assertSame('changed', $session->fresh()->status);
     }
 
     public function test_locked_sessions_cannot_be_changed_or_cancelled(): void
