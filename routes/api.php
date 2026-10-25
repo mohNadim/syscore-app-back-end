@@ -2,8 +2,11 @@
 
 use App\Enums\PermissionCode;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
+use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
+use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\ChildController;
@@ -44,6 +47,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::StaffManage->value)->group(function () {
                 Route::apiResource('staff', StaffController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::FacilitiesManage->value)->group(function () {
+                Route::apiResource('facilities', FacilityController::class);
+                Route::apiResource('facilities.spaces', SpaceController::class)->shallow();
+                Route::apiResource('bookable-units', BookableUnitController::class);
+                Route::put('bookable-units/{bookable_unit}/sports', [BookableUnitController::class, 'syncSports'])->name('bookable-units.sports');
             });
         });
     });
