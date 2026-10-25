@@ -97,14 +97,15 @@ class AdminSettingsTest extends TestCase
             ->assertJsonPath('data.booking.advance_window_days', 14)
             ->assertJsonPath('data.otp.channel', 'whatsapp');
 
-        $deposit = Setting::find('booking.deposit_percent');
+        $deposit = Setting::firstWhere('key', 'booking.deposit_percent');
         $this->assertSame(40, $deposit->value);
         $this->assertSame($staff->id, $deposit->updated_by_staff_id);
-        $this->assertNull(Setting::find('booking.advance_window_days')->updated_by_staff_id);
+        $this->assertNull(Setting::firstWhere('key', 'booking.advance_window_days')->updated_by_staff_id);
 
         $this->assertSame(2, AuditLog::where('action', 'setting.updated')->count());
         $log = AuditLog::where('action', 'setting.updated')->where('before->key', 'booking.deposit_percent')->first();
         $this->assertSame('setting', $log->entity_type);
+        $this->assertSame($deposit->id, $log->entity_id);
         $this->assertSame(['key' => 'booking.deposit_percent', 'value' => 30], $log->before);
         $this->assertSame(['key' => 'booking.deposit_percent', 'value' => 40], $log->after);
     }
@@ -115,12 +116,12 @@ class AdminSettingsTest extends TestCase
 
         $this->putJson(self::URL, ['booking' => ['deposit_percent' => 30]])->assertOk();
 
-        $this->assertNull(Setting::find('booking.deposit_percent'));
+        $this->assertNull(Setting::firstWhere('key', 'booking.deposit_percent'));
         $this->assertSame(0, AuditLog::where('action', 'setting.updated')->count());
 
         $this->putJson(self::URL, ['booking' => ['deposit_percent' => 31]])->assertOk();
 
-        $this->assertSame(31, Setting::find('booking.deposit_percent')->value);
+        $this->assertSame(31, Setting::firstWhere('key', 'booking.deposit_percent')->value);
         $this->assertSame(1, AuditLog::where('action', 'setting.updated')->count());
     }
 
@@ -133,7 +134,7 @@ class AdminSettingsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.app.contact', ['phone' => null, 'whatsapp' => '+963999', 'address_ar' => 'دمشق', 'address_en' => 'Damascus']);
 
-        $this->assertSame(['phone', 'whatsapp', 'address_ar', 'address_en'], array_keys(Setting::find('app.contact')->value));
+        $this->assertSame(['phone', 'whatsapp', 'address_ar', 'address_en'], array_keys(Setting::firstWhere('key', 'app.contact')->value));
     }
 
     public function test_validation_errors_in_arabic(): void

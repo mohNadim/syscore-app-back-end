@@ -15,23 +15,6 @@ class Setting extends Model
     use HasFactory;
 
     /**
-     * The primary key is the setting key, not an auto-incrementing integer.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'key';
-
-    /**
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * @var string
-     */
-    protected $keyType = 'string';
-
-    /**
      * The table has no created_at column.
      */
     public const CREATED_AT = null;

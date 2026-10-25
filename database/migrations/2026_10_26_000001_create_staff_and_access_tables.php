@@ -44,7 +44,8 @@ return new class extends Migration
         });
 
         Schema::create('settings', function (Blueprint $table) {
-            $table->string('key', 100)->primary();
+            $table->id();
+            $table->string('key', 100)->unique();
             $table->json('value');
             $table->foreignId('updated_by_staff_id')->nullable()->constrained('staff');
             $table->dateTime('updated_at')->useCurrent()->useCurrentOnUpdate();

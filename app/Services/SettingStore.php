@@ -37,6 +37,6 @@ class SettingStore
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        return Setting::query()->find($key)?->value ?? $default ?? (self::DEFAULTS[$key] ?? null);
+        return Setting::query()->firstWhere('key', $key)?->value ?? $default ?? (self::DEFAULTS[$key] ?? null);
     }
 }
