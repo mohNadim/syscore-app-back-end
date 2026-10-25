@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthOtpController;
+use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -10,6 +11,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('otp/request', [AuthOtpController::class, 'requestCode'])->middleware('throttle:otp-request')->name('otp.request');
         Route::post('otp/verify', [AuthOtpController::class, 'verifyCode'])->middleware('throttle:otp-verify')->name('otp.verify');
         Route::post('logout', [AuthOtpController::class, 'logout'])->middleware(['auth:sanctum', 'user'])->name('logout');
+    });
+
+    Route::middleware(['auth:sanctum', 'user'])->group(function () {
+        Route::get('me', [ProfileController::class, 'show'])->name('me.show');
+        Route::patch('me', [ProfileController::class, 'update'])->name('me.update');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
