@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\PriceRuleController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
+use App\Http\Controllers\Api\V1\Admin\SettingController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\SportController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
@@ -72,6 +73,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::get('facilities/{facility}/operating-hours', [OperatingHourController::class, 'index'])->name('facilities.operating-hours.index');
                 Route::put('facilities/{facility}/operating-hours', [OperatingHourController::class, 'update'])->name('facilities.operating-hours.update');
                 Route::apiResource('closures', ClosureController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::SettingsManage->value)->group(function () {
+                Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
+                Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
             });
         });
     });
