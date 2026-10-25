@@ -3,6 +3,7 @@
 use App\Enums\PermissionCode;
 use App\Http\Controllers\Api\V1\Admin\AcademyController as AdminAcademyController;
 use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
+use App\Http\Controllers\Api\V1\Admin\AttendanceController;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
 use App\Http\Controllers\Api\V1\Admin\BookingController as AdminBookingController;
@@ -152,6 +153,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::get('training-sessions/{training_session}', [TrainingSessionController::class, 'show'])->name('training-sessions.show');
                 Route::patch('training-sessions/{training_session}', [TrainingSessionController::class, 'update'])->name('training-sessions.update');
                 Route::post('training-sessions/{training_session}/cancel', [TrainingSessionController::class, 'cancel'])->name('training-sessions.cancel');
+            });
+
+            Route::middleware('permission:'.PermissionCode::AttendanceManage->value)->group(function () {
+                Route::get('sessions', [AttendanceController::class, 'index'])->name('sessions.index');
+                Route::get('sessions/{training_session}/attendance', [AttendanceController::class, 'show'])->whereNumber('training_session')->name('sessions.attendance.show');
+                Route::put('sessions/{training_session}/attendance', [AttendanceController::class, 'update'])->whereNumber('training_session')->name('sessions.attendance.update');
             });
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
