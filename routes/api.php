@@ -3,7 +3,9 @@
 use App\Enums\PermissionCode;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
+use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
+use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
@@ -59,6 +61,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::SportsManage->value)->group(function () {
                 Route::apiResource('sports', SportController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {
+                Route::get('facilities/{facility}/operating-hours', [OperatingHourController::class, 'index'])->name('facilities.operating-hours.index');
+                Route::put('facilities/{facility}/operating-hours', [OperatingHourController::class, 'update'])->name('facilities.operating-hours.update');
+                Route::apiResource('closures', ClosureController::class);
             });
         });
     });
