@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
 use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
+use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\PriceRuleController;
@@ -95,6 +96,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::middleware('permission:'.PermissionCode::AcademiesManage->value)->group(function () {
                 Route::apiResource('academies', AdminAcademyController::class);
                 Route::apiResource('academies.groups', AcademyGroupController::class)->shallow();
+                Route::apiResource('groups.schedules', GroupScheduleController::class)->shallow();
             });
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
