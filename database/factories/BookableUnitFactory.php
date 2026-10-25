@@ -20,7 +20,7 @@ class BookableUnitFactory extends Factory
     {
         return [
             'facility_id' => Facility::factory(),
-            'code' => strtoupper(fake()->unique()->bothify('U-###??')),
+            'code' => strtoupper(fake()->unique()->bothify('U_###??')),
             'name_ar' => fake()->words(2, true),
             'name_en' => fake()->words(2, true),
             'is_active' => true,
