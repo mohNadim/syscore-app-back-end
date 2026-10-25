@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\WaitlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -74,6 +75,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
         Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
+        Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('subscriptions/{subscription}', [SubscriptionController::class, 'show'])->whereNumber('subscription')->name('subscriptions.show');
+        Route::post('subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->whereNumber('subscription')->name('subscriptions.renew');
+        Route::post('subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->whereNumber('subscription')->name('subscriptions.cancel');
         Route::get('waitlist', [WaitlistController::class, 'index'])->name('waitlist.index');
         Route::delete('waitlist/{waitlist_entry}', [WaitlistController::class, 'destroy'])->whereNumber('waitlist_entry')->name('waitlist.destroy');
 
