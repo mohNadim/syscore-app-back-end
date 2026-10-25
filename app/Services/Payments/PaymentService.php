@@ -161,6 +161,80 @@ class PaymentService
     }
 
     /**
+     * Record a cash payment taken at the desk and credit it to the booking or subscription.
+     *
+     * A booking payment defaults to the remaining balance; a subscription payment must equal its price.
+     *
+     * @throws UnprocessableEntityHttpException when nothing is payable or the amount is not acceptable
+     */
+    public function recordCash(Booking|Subscription $target, ?int $amount, Staff $staff, ?string $payerName, ?string $payerPhone): Payment
+    {
+        return DB::transaction(function () use ($target, $amount, $staff, $payerName, $payerPhone): Payment {
+            $locked = $target::query()->lockForUpdate()->findOrFail($target->id);
+
+            if ($locked instanceof Booking) {
+                [$purpose, $amount] = $this->cashBookingPurposeAndAmount($locked, $amount);
+                $ownerId = $locked->user_id;
+                $payerName ??= $locked->guest_name;
+                $payerPhone ??= $locked->guest_phone;
+            } else {
+                if ($locked->status !== 'pending_payment' || $locked->final_price <= 0) {
+                    throw new UnprocessableEntityHttpException(__('payments.not_payable'));
+                }
+
+                if ($amount !== null && $amount !== $locked->final_price) {
+                    throw new UnprocessableEntityHttpException(__('payments.amount_must_match_price'));
+                }
+
+                $purpose = 'subscription';
+                $amount = $locked->final_price;
+                $ownerId = $locked->enrollment->child->user_id;
+            }
+
+            $payment = new Payment([
+                'user_id' => $ownerId,
+                'payer_name' => $payerName,
+                'payer_phone' => $payerPhone,
+                'amount' => $amount,
+                'method' => 'cash',
+                'purpose' => $purpose,
+                'status' => 'succeeded',
+                'booking_id' => $locked instanceof Booking ? $locked->id : null,
+                'subscription_id' => $locked instanceof Subscription ? $locked->id : null,
+                'recorded_by_staff_id' => $staff->id,
+                'paid_at' => now(),
+            ]);
+            $this->assignReceiptNumber($payment);
+            $payment->save();
+
+            $this->audit->log('payment.cash_recorded', $payment, null, ['purpose' => $purpose, 'amount' => $amount], $staff);
+            $this->applySuccessfulPayment($payment);
+
+            return $payment->refresh();
+        });
+    }
+
+    /**
+     * Fully refund what is left of every Sham Cash payment of a booking.
+     */
+    public function refundOnlinePayments(Booking $booking, ?Staff $staff, ?string $reason): void
+    {
+        $payments = $booking->payments()
+            ->where('method', 'sham_cash')
+            ->whereIn('status', ['succeeded', 'partially_refunded'])
+            ->orderBy('id')
+            ->get();
+
+        foreach ($payments as $payment) {
+            $refundable = $payment->amount - (int) $payment->refunds()->sum('amount');
+
+            if ($refundable > 0) {
+                $this->refund($payment, $refundable, $staff, $reason);
+            }
+        }
+    }
+
+    /**
      * Refund part or all of a succeeded payment.
      *
      * @throws UnprocessableEntityHttpException when the payment is not refundable or the amount is too high
@@ -225,7 +299,10 @@ class PaymentService
     {
         $booking = Booking::query()->lockForUpdate()->findOrFail($payment->booking_id);
 
-        if (in_array($booking->status, self::CLOSED_BOOKING_STATUSES, true) || $booking->paid_amount + $payment->amount > $booking->final_price) {
+        $closed = in_array($booking->status, ['cancelled', 'expired', 'no_show'], true)
+            || ($booking->status === 'completed' && $payment->method !== 'cash');
+
+        if ($closed || $booking->paid_amount + $payment->amount > $booking->final_price) {
             $this->refund($payment, $payment->amount, null, 'target_not_payable');
 
             return;
@@ -240,6 +317,40 @@ class PaymentService
 
         $booking->save();
         $this->audit->log('booking.paid', $booking, $before, ['status' => $booking->status, 'paid_amount' => $booking->paid_amount]);
+    }
+
+    /**
+     * The purpose and amount of a desk cash payment on a booking.
+     *
+     * @return array{0: string, 1: int}
+     *
+     * @throws UnprocessableEntityHttpException when the booking cannot take that payment
+     */
+    protected function cashBookingPurposeAndAmount(Booking $booking, ?int $amount): array
+    {
+        $remaining = $booking->final_price - $booking->paid_amount;
+
+        if (! in_array($booking->status, ['pending_deposit', 'confirmed', 'completed'], true) || $remaining <= 0) {
+            throw new UnprocessableEntityHttpException(__('payments.not_payable'));
+        }
+
+        $amount ??= $remaining;
+
+        if ($amount > $remaining) {
+            throw new UnprocessableEntityHttpException(__('payments.amount_exceeds_remaining'));
+        }
+
+        if ($booking->status === 'pending_deposit' && $booking->deposit_amount > 0 && $amount < $booking->deposit_amount) {
+            throw new UnprocessableEntityHttpException(__('payments.amount_below_deposit'));
+        }
+
+        $purpose = match (true) {
+            $booking->paid_amount === 0 && $amount === $booking->final_price => 'booking_full',
+            $booking->paid_amount === 0 => 'booking_deposit',
+            default => 'booking_balance',
+        };
+
+        return [$purpose, $amount];
     }
 
     protected function applyToSubscription(Payment $payment): void

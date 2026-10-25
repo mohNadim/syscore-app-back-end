@@ -8,6 +8,7 @@ use App\Models\Staff;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Payments\PaymentService;
 use App\Services\Pricing\PricingService;
 use App\Services\Reservations\OperatingHoursChecker;
 use App\Services\Reservations\SpaceReservationService;
@@ -41,6 +42,7 @@ class BookingService
         protected DisplayTimezone $timezone,
         protected SettingStore $settings,
         protected AuditLogger $audit,
+        protected PaymentService $payments,
     ) {}
 
     /**
@@ -160,7 +162,11 @@ class BookingService
 
             $this->reservations->releaseForBooking($locked);
 
-            // @todo Refund the paid amount according to the cancellation policy (phase 8); refund_amount stays 0.
+            if ($byUser !== null && $byStaff === null) {
+                $this->payments->refundOnlinePayments($locked, null, 'customer_cancellation');
+                $locked->refresh();
+            }
+
             $this->audit->log('booking.cancelled', $locked, $before, ['status' => 'cancelled', 'cancel_reason' => $reason]);
 
             return $locked;

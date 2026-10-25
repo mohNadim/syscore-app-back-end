@@ -31,7 +31,7 @@ class PaymentResource extends JsonResource
             'booking_id' => $this->booking_id,
             'subscription_id' => $this->subscription_id,
             'provider_reference' => $this->provider_reference,
-            'refunded_amount' => (int) $this->refunds()->sum('amount'),
+            'refunded_amount' => (int) ($this->relationLoaded('refunds') ? $this->refunds->sum('amount') : $this->refunds()->sum('amount')),
             'paid_at' => $this->paid_at ? $timezone->utcToLocalIso($this->paid_at) : null,
             'created_at' => $this->created_at ? $timezone->utcToLocalIso($this->created_at) : null,
         ];

@@ -81,6 +81,12 @@ class ShamCashWebhookTest extends TestCase
         $this->assertSame('pending', $payment->fresh()->status);
     }
 
+    public function test_bad_signature_wins_over_a_malformed_body(): void
+    {
+        $this->webhook(['status' => 'weird', 'amount' => -1], 'bad')->assertUnauthorized();
+        $this->webhook(['status' => 'weird'], '')->assertUnauthorized();
+    }
+
     public function test_success_confirms_a_pending_deposit_booking(): void
     {
         $payment = $this->pendingBookingPayment();
