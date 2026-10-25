@@ -6,6 +6,9 @@ return [
     'not_payable' => 'Nothing is payable on this item right now.',
     'not_refundable' => 'This payment cannot be refunded.',
     'refund_exceeds' => 'The refund amount must be positive and not exceed the refundable balance.',
+    'amount_exceeds_remaining' => 'The amount exceeds the remaining balance of the booking.',
+    'amount_below_deposit' => 'The amount cannot be less than the required deposit.',
+    'amount_must_match_price' => 'The amount must equal the subscription price.',
     'invalid_signature' => 'The webhook signature is invalid.',
     'number_generation_failed' => 'A receipt number could not be generated. Please try again.',
 

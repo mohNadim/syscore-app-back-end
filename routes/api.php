@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Admin\EnrollmentController as AdminEnrollmentCon
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
+use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\PriceRuleController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
@@ -65,7 +66,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('availability', [AvailabilityController::class, 'show'])->name('availability.show');
     Route::get('app-config', [AppConfigController::class, 'show'])->name('app-config.show');
 
-    Route::post('webhooks/sham-cash', ShamCashWebhookController::class)->name('webhooks.sham-cash');
+    Route::post('webhooks/sham-cash', ShamCashWebhookController::class)->middleware('sham-cash.signature')->name('webhooks.sham-cash');
 
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('otp/request', [AuthOtpController::class, 'requestCode'])->middleware('throttle:otp-request')->name('otp.request');
@@ -190,6 +191,14 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::post('waitlist/{waitlist_entry}/offer', [AdminWaitlistController::class, 'offer'])->whereNumber('waitlist_entry')->name('waitlist.offer');
                 Route::post('waitlist/{waitlist_entry}/remove', [AdminWaitlistController::class, 'remove'])->whereNumber('waitlist_entry')->name('waitlist.remove');
             });
+
+            Route::middleware('permission:'.PermissionCode::PaymentsView->value)->group(function () {
+                Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
+                Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
+            });
+
+            Route::post('payments', [AdminPaymentController::class, 'store'])->middleware('permission:'.PermissionCode::PaymentsManage->value)->name('payments.store');
+            Route::post('payments/{payment}/refunds', [AdminPaymentController::class, 'refund'])->whereNumber('payment')->middleware('permission:'.PermissionCode::RefundsManage->value)->name('payments.refunds.store');
 
             Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {
                 Route::get('facilities/{facility}/operating-hours', [OperatingHourController::class, 'index'])->name('facilities.operating-hours.index');

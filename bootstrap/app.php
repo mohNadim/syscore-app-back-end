@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\EnsureUser;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\VerifyShamCashSignature;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'user' => EnsureUser::class,
             'staff' => EnsureStaff::class,
             'permission' => EnsurePermission::class,
+            'sham-cash.signature' => VerifyShamCashSignature::class,
         ]);
 
         $middleware->prepend(SetLocale::class);
