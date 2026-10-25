@@ -7,6 +7,11 @@ use Carbon\CarbonInterface;
 
 class DisplayTimezone
 {
+    /**
+     * The time zone name, read from the settings once per instance.
+     */
+    protected ?string $resolvedName = null;
+
     public function __construct(protected SettingStore $settings) {}
 
     /**
@@ -14,7 +19,7 @@ class DisplayTimezone
      */
     public function name(): string
     {
-        return (string) $this->settings->get('app.display_timezone', 'Asia/Damascus');
+        return $this->resolvedName ??= (string) $this->settings->get('app.display_timezone', 'Asia/Damascus');
     }
 
     /**

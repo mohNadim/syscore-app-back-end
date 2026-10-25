@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
 use App\Http\Controllers\Api\V1\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Api\V1\Admin\CalendarController;
 use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
 use App\Http\Controllers\Api\V1\Admin\DiscountController;
@@ -145,6 +146,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::middleware('permission:'.PermissionCode::BookingsView->value)->group(function () {
                 Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
                 Route::get('bookings/{booking}', [AdminBookingController::class, 'show'])->whereNumber('booking')->name('bookings.show');
+                Route::get('calendar', [CalendarController::class, 'show'])->name('calendar.show');
             });
 
             Route::middleware('permission:'.PermissionCode::BookingsManage->value)->group(function () {
