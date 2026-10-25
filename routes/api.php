@@ -14,6 +14,13 @@ use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\SportController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
+use App\Http\Controllers\Api\V1\Catalog\AcademyController;
+use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
+use App\Http\Controllers\Api\V1\Catalog\CoachController;
+use App\Http\Controllers\Api\V1\Catalog\FacilityController as CatalogFacilityController;
+use App\Http\Controllers\Api\V1\Catalog\GalleryAlbumController;
+use App\Http\Controllers\Api\V1\Catalog\NewsController;
+use App\Http\Controllers\Api\V1\Catalog\SportController as CatalogSportController;
 use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ProfileController;
@@ -21,6 +28,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('ping', fn () => response()->json(['message' => __('api.pong')]))->name('ping');
+
+    Route::get('facilities', [CatalogFacilityController::class, 'index'])->name('facilities.index');
+    Route::get('facilities/{facility}', [CatalogFacilityController::class, 'show'])->name('facilities.show');
+    Route::get('sports', [CatalogSportController::class, 'index'])->name('sports.index');
+    Route::get('coaches', [CoachController::class, 'index'])->name('coaches.index');
+    Route::get('coaches/{coach}', [CoachController::class, 'show'])->name('coaches.show');
+    Route::get('academies', [AcademyController::class, 'index'])->name('academies.index');
+    Route::get('academies/{academy}', [AcademyController::class, 'show'])->name('academies.show');
+    Route::get('news', [NewsController::class, 'index'])->name('news.index');
+    Route::get('news/{news}', [NewsController::class, 'show'])->whereNumber('news')->name('news.show');
+    Route::get('gallery/albums', [GalleryAlbumController::class, 'index'])->name('gallery.albums.index');
+    Route::get('gallery/albums/{album}', [GalleryAlbumController::class, 'show'])->name('gallery.albums.show');
+    Route::get('app-config', [AppConfigController::class, 'show'])->name('app-config.show');
 
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('otp/request', [AuthOtpController::class, 'requestCode'])->middleware('throttle:otp-request')->name('otp.request');
