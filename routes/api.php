@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\V1\Catalog\GalleryAlbumController;
 use App\Http\Controllers\Api\V1\Catalog\NewsController;
 use App\Http\Controllers\Api\V1\Catalog\SportController as CatalogSportController;
 use App\Http\Controllers\Api\V1\ChildController;
+use App\Http\Controllers\Api\V1\ChildScheduleController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -81,6 +82,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::apiResource('children', ChildController::class);
         Route::get('children/{child}/eligible-groups', [EnrollmentController::class, 'eligibleGroups'])->whereNumber('child')->name('children.eligible-groups');
+
+        Route::get('children/{child}/schedule', [ChildScheduleController::class, 'schedule'])->whereNumber('child')->name('children.schedule');
+        Route::get('children/{child}/attendance', [ChildScheduleController::class, 'attendance'])->whereNumber('child')->name('children.attendance');
 
         Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
         Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
