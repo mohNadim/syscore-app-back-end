@@ -52,7 +52,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof AuthorizationException,
                 $e instanceof AccessDeniedHttpException => response()->json(['message' => __('api.forbidden')], 403),
                 $e instanceof ModelNotFoundException,
-                $e instanceof NotFoundHttpException => response()->json(['message' => __('api.not_found')], 404),
+                $e instanceof NotFoundHttpException,
+                $e instanceof HttpExceptionInterface && $e->getStatusCode() === 404 => response()->json(['message' => __('api.not_found')], 404),
                 $e instanceof MethodNotAllowedHttpException => response()->json(['message' => __('api.method_not_allowed')], 405, $headers),
                 $e instanceof TooManyRequestsHttpException => response()->json(array_filter([
                     'message' => __('api.too_many_requests'),
