@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BookingController;
 use App\Http\Controllers\Api\V1\BookingQuoteController;
+use App\Http\Controllers\Api\V1\BookingSeriesController;
 use App\Http\Controllers\Api\V1\Catalog\AcademyController;
 use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
 use App\Http\Controllers\Api\V1\Catalog\CoachController;
@@ -70,6 +71,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
         Route::get('bookings/{booking}', [BookingController::class, 'show'])->whereNumber('booking')->name('bookings.show');
         Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->whereNumber('booking')->name('bookings.cancel');
+
+        Route::get('booking-series', [BookingSeriesController::class, 'index'])->name('booking-series.index');
+        Route::post('booking-series/preview', [BookingSeriesController::class, 'preview'])->name('booking-series.preview');
+        Route::post('booking-series', [BookingSeriesController::class, 'store'])->name('booking-series.store');
+        Route::get('booking-series/{booking_series}', [BookingSeriesController::class, 'show'])->whereNumber('booking_series')->name('booking-series.show');
+        Route::post('booking-series/{booking_series}/cancel', [BookingSeriesController::class, 'cancel'])->whereNumber('booking_series')->name('booking-series.cancel');
 
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
         Route::delete('devices', [DeviceController::class, 'destroy'])->name('devices.destroy');

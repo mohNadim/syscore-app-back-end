@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ScheduleConflictException;
+use App\Exceptions\SeriesUnavailableException;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureStaff;
 use App\Http\Middleware\EnsureUser;
@@ -72,6 +73,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof ScheduleConflictException => response()->json([
                     'message' => $e->getMessage(),
                     'conflicts' => $e->conflicts,
+                ], 409),
+                $e instanceof SeriesUnavailableException => response()->json([
+                    'message' => $e->getMessage(),
+                    'unavailable' => $e->unavailable,
                 ], 409),
                 $e instanceof ConflictHttpException => response()->json([
                     'message' => $e->getMessage() !== '' ? $e->getMessage() : __('api.conflict'),
