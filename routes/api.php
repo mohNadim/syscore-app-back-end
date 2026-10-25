@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\AcademyController as AdminAcademyControlle
 use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
+use App\Http\Controllers\Api\V1\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
 use App\Http\Controllers\Api\V1\Admin\DiscountController;
@@ -139,6 +140,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::DiscountsManage->value)->group(function () {
                 Route::apiResource('discounts', DiscountController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::BookingsView->value)->group(function () {
+                Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+                Route::get('bookings/{booking}', [AdminBookingController::class, 'show'])->whereNumber('booking')->name('bookings.show');
+            });
+
+            Route::middleware('permission:'.PermissionCode::BookingsManage->value)->group(function () {
+                Route::post('bookings', [AdminBookingController::class, 'store'])->name('bookings.store');
+                Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->whereNumber('booking')->name('bookings.cancel');
+                Route::post('bookings/{booking}/no-show', [AdminBookingController::class, 'noShow'])->whereNumber('booking')->name('bookings.no-show');
             });
 
             Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {

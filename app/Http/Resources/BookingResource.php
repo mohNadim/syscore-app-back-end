@@ -37,6 +37,7 @@ class BookingResource extends JsonResource
             'sport_id' => $this->sport_id,
             'sport' => new SportResource($this->whenLoaded('sport')),
             'series_id' => $this->series_id,
+            'series' => new BookingSeriesResource($this->whenLoaded('series')),
             'starts_at' => $timezone->utcToLocalIso($this->starts_at),
             'ends_at' => $timezone->utcToLocalIso($this->ends_at),
             'duration_minutes' => (int) $this->starts_at->diffInMinutes($this->ends_at, true),
@@ -61,6 +62,11 @@ class BookingResource extends JsonResource
             'cancelled_at' => $this->cancelled_at ? $timezone->utcToLocalIso($this->cancelled_at) : null,
             'cancel_reason' => $this->cancel_reason,
             'refund_amount' => $this->refund_amount,
+            'created_by_staff_id' => $this->created_by_staff_id,
+            'created_by_staff' => $this->whenLoaded('createdByStaff', fn () => $this->createdByStaff === null ? null : [
+                'id' => $this->createdByStaff->id,
+                'full_name' => $this->createdByStaff->full_name,
+            ]),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

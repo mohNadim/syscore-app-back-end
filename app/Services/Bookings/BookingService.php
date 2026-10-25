@@ -168,6 +168,27 @@ class BookingService
     }
 
     /**
+     * Mark a confirmed booking whose start has passed as a no-show; its reservations are kept as they are.
+     *
+     * @throws UnprocessableEntityHttpException when the booking is not confirmed or has not started yet
+     */
+    public function markNoShow(Booking $booking): Booking
+    {
+        return DB::transaction(function () use ($booking): Booking {
+            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+
+            if ($locked->status !== 'confirmed' || $locked->starts_at->gt(now())) {
+                throw new UnprocessableEntityHttpException(__('admin_bookings.cannot_mark_no_show'));
+            }
+
+            $locked->update(['status' => 'no_show']);
+            $this->audit->log('booking.no_show', $locked, ['status' => 'confirmed'], ['status' => 'no_show']);
+
+            return $locked;
+        });
+    }
+
+    /**
      * The reason a booking cannot be cancelled now as a lang key of `bookings`, or null when it can.
      *
      * Customers may cancel an unpaid booking until it starts and a confirmed one until the cancellation deadline;
