@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['full_name', 'username', 'phone', 'password_hash', 'role_id', 'is_active', 'last_login_at'])]
 #[Hidden(['password_hash'])]
 class Staff extends Authenticatable
 {
     /** @use HasFactory<StaffFactory> */
-    use HasFactory;
+    use HasApiTokens, HasFactory;
 
     protected $table = 'staff';
 
@@ -50,6 +51,16 @@ class Staff extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Determine whether the staff member's role grants the given permission code.
+     */
+    public function hasPermission(string $code): bool
+    {
+        $this->loadMissing('role.permissions');
+
+        return $this->role?->permissions->contains('code', $code) ?? false;
     }
 
     /**
