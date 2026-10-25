@@ -38,6 +38,6 @@ class PriceRule extends Model
      */
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(BookableUnit::class);
+        return $this->belongsTo(BookableUnit::class, 'unit_id');
     }
 }
