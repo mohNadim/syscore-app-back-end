@@ -37,6 +37,42 @@ class Discount extends Model
     }
 
     /**
+     * Convert a list of weekdays (0 = Sunday ... 6 = Saturday) to the stored bitmask; null for "every day".
+     *
+     * @param  array<int, int>|null  $weekdays
+     */
+    public static function weekdaysToMask(?array $weekdays): ?int
+    {
+        if ($weekdays === null || $weekdays === []) {
+            return null;
+        }
+
+        return array_reduce($weekdays, fn (int $mask, int $weekday) => $mask | (1 << $weekday), 0);
+    }
+
+    /**
+     * The weekdays this discount applies on as a sorted list, or null when it applies every day.
+     *
+     * @return list<int>|null
+     */
+    public function weekdayList(): ?array
+    {
+        if ($this->weekdays === null) {
+            return null;
+        }
+
+        return array_values(array_filter(range(0, 6), fn (int $weekday) => ($this->weekdays & (1 << $weekday)) !== 0));
+    }
+
+    /**
+     * Whether the discount is valid on the given weekday (0 = Sunday ... 6 = Saturday).
+     */
+    public function appliesOnWeekday(int $weekday): bool
+    {
+        return $this->weekdays === null || ($this->weekdays & (1 << $weekday)) !== 0;
+    }
+
+    /**
      * @return BelongsTo<Staff, $this>
      */
     public function createdByStaff(): BelongsTo
