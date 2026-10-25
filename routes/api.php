@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
+use App\Http\Controllers\Api\V1\Admin\PriceRuleController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\SportController;
@@ -61,6 +62,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::SportsManage->value)->group(function () {
                 Route::apiResource('sports', SportController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
+                Route::apiResource('price-rules', PriceRuleController::class);
             });
 
             Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {
