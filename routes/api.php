@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
+use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::middleware(['auth:sanctum', 'user'])->group(function () {
         Route::get('me', [ProfileController::class, 'show'])->name('me.show');
         Route::patch('me', [ProfileController::class, 'update'])->name('me.update');
+
+        Route::apiResource('children', ChildController::class);
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
