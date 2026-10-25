@@ -76,17 +76,17 @@ class DatabaseSeederTest extends TestCase
         $this->assertSame(count(SettingSeeder::DEFAULTS), Setting::count());
 
         foreach (SettingSeeder::DEFAULTS as $key => $value) {
-            $this->assertSame($value, Setting::findOrFail($key)->value, $key);
+            $this->assertSame($value, Setting::where('key', $key)->firstOrFail()->value, $key);
         }
     }
 
     public function test_setting_seeder_does_not_overwrite_existing_values(): void
     {
-        Setting::findOrFail('booking.slot_minutes')->update(['value' => 90]);
+        Setting::where('key', 'booking.slot_minutes')->firstOrFail()->update(['value' => 90]);
 
         $this->seed(SettingSeeder::class);
 
-        $this->assertSame(90, Setting::findOrFail('booking.slot_minutes')->value);
+        $this->assertSame(90, Setting::where('key', 'booking.slot_minutes')->firstOrFail()->value);
     }
 
     public function test_admin_staff_is_seeded_once_with_manager_role(): void

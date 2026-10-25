@@ -12,7 +12,6 @@ class AuditLogger
 {
     /**
      * Record an audit log entry for an action on an entity.
-     * Entities with a non-numeric key (such as settings) are stored with entity_id 0, so put the key in the payload.
      *
      * @param  array<string, mixed>|null  $before
      * @param  array<string, mixed>|null  $after
@@ -31,7 +30,7 @@ class AuditLogger
             'actor_staff_id' => $actor instanceof Staff ? $actor->getKey() : null,
             'action' => $action,
             'entity_type' => Str::snake(class_basename($entity)),
-            'entity_id' => is_numeric($entity->getKey()) ? (int) $entity->getKey() : 0,
+            'entity_id' => $entity->getKey(),
             'before' => $before,
             'after' => $after,
             'ip_address' => request()->ip(),
