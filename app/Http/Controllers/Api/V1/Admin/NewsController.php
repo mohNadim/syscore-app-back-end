@@ -35,7 +35,7 @@ class NewsController extends Controller
         $news = News::create([
             ...$request->newsAttributes(),
             'created_by_staff_id' => $request->user()->getKey(),
-        ]);
+        ])->refresh();
 
         $audit->log('news.created', $news, null, $news->toArray());
 

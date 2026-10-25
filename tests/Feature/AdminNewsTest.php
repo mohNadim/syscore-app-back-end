@@ -112,11 +112,14 @@ class AdminNewsTest extends TestCase
     {
         $this->actingAsContentManager();
 
-        $this->postJson('/api/v1/admin/news', $this->validPayload([
-            'published_at' => null,
-            'cover_url' => null,
-        ]))
+        $this->postJson('/api/v1/admin/news', [
+            'title_ar' => 'خبر',
+            'title_en' => 'News',
+            'body_ar' => 'نص',
+            'body_en' => 'Body',
+        ])
             ->assertCreated()
+            ->assertJsonPath('data.is_published', false)
             ->assertJsonPath('data.published_at', null)
             ->assertJsonPath('data.cover_url', null);
     }
