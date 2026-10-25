@@ -2,6 +2,7 @@
 
 namespace App\Services\Reservations;
 
+use App\Models\Booking;
 use App\Models\Closure;
 use App\Models\Space;
 use App\Models\SpaceReservation;
@@ -88,5 +89,31 @@ class SpaceReservationService
     public function releaseForSession(TrainingSession $session): void
     {
         SpaceReservation::query()->where('session_id', $session->id)->update(['is_active' => false]);
+    }
+
+    /**
+     * Insert one active reservation per space for the booking's interval.
+     *
+     * @param  list<int>  $spaceIds
+     */
+    public function reserveForBooking(Booking $booking, array $spaceIds): void
+    {
+        foreach ($spaceIds as $spaceId) {
+            SpaceReservation::create([
+                'space_id' => $spaceId,
+                'starts_at' => $booking->starts_at,
+                'ends_at' => $booking->ends_at,
+                'booking_id' => $booking->id,
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Deactivate every reservation of the booking.
+     */
+    public function releaseForBooking(Booking $booking): void
+    {
+        SpaceReservation::query()->where('booking_id', $booking->id)->update(['is_active' => false]);
     }
 }
