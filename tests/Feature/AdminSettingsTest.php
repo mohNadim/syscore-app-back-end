@@ -64,6 +64,7 @@ class AdminSettingsTest extends TestCase
             ->assertJsonPath('data.otp.channel', 'sms')
             ->assertJsonPath('data.subscription.expiry_reminder_days', 7)
             ->assertJsonPath('data.academy.session_generation_days', 28)
+            ->assertJsonPath('data.academy.enrollment_payment_hours', 48)
             ->assertJsonPath('data.app.display_timezone', 'Asia/Damascus')
             ->assertJsonPath('data.app.contact.phone', null)
             ->assertJsonPath('meta.updated_at', null);

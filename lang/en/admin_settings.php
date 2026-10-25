@@ -18,6 +18,7 @@ return [
         'otp_resend_cooldown_seconds' => 'The resend cooldown must be a whole number of seconds from 10 to 600.',
         'expiry_reminder_days' => 'The expiry reminder must be a whole number of days from 0 to 30.',
         'session_generation_days' => 'The session generation window must be a whole number of days from 1 to 180.',
+        'enrollment_payment_hours' => 'The enrollment payment window must be a whole number of hours from 1 to 720.',
         'display_timezone' => 'The display timezone must be a valid timezone identifier.',
         'contact_invalid' => 'The contact details must be an object.',
         'contact_phone' => 'The phone number must be text of at most 20 characters.',
