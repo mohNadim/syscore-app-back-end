@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
-        // staff routes (middleware auth:sanctum, staff, permission:...) added in later phases
+        Route::post('auth/login', [AdminAuthController::class, 'login'])->middleware('throttle:admin-login')->name('auth.login');
+
+        Route::middleware(['auth:sanctum', 'staff'])->group(function () {
+            Route::post('auth/logout', [AdminAuthController::class, 'logout'])->name('auth.logout');
+            Route::get('me', [AdminAuthController::class, 'me'])->name('me');
+        });
     });
 });
