@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Admin\DiscountController;
 use App\Http\Controllers\Api\V1\Admin\EnrollmentController as AdminEnrollmentController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
+use App\Http\Controllers\Api\V1\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
 use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
@@ -163,6 +164,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::get('sessions', [AttendanceController::class, 'index'])->name('sessions.index');
                 Route::get('sessions/{training_session}/attendance', [AttendanceController::class, 'show'])->whereNumber('training_session')->name('sessions.attendance.show');
                 Route::put('sessions/{training_session}/attendance', [AttendanceController::class, 'update'])->whereNumber('training_session')->name('sessions.attendance.update');
+            });
+
+            Route::middleware('permission:'.PermissionCode::ContentManage->value)->group(function () {
+                Route::apiResource('news', AdminNewsController::class);
             });
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
