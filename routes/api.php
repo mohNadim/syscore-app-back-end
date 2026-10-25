@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
 use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
+use App\Http\Controllers\Api\V1\Admin\DiscountController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
@@ -117,6 +118,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::get('user-categories/{user_category}/members', [UserCategoryController::class, 'members'])->name('user-categories.members.index');
                 Route::post('user-categories/{user_category}/members', [UserCategoryController::class, 'addMembers'])->name('user-categories.members.store');
                 Route::delete('user-categories/{user_category}/members/{user}', [UserCategoryController::class, 'removeMember'])->name('user-categories.members.destroy');
+            });
+
+            Route::middleware('permission:'.PermissionCode::DiscountsManage->value)->group(function () {
+                Route::apiResource('discounts', DiscountController::class);
             });
 
             Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {
