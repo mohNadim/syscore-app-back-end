@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AdminStaffSeeder::class,
             FacilitySeeder::class,
             SettingSeeder::class,
+            DemoBookingDataSeeder::class,
         ]);
     }
 }
