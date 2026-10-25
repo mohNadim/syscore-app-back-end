@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Services\Otp\LogOtpSender;
 use App\Services\Otp\OtpSender;
 use App\Services\Otp\PhoneNumber;
+use App\Services\Payments\ShamCash\FakeShamCashGateway;
+use App\Services\Payments\ShamCash\ShamCashGateway;
 use App\Services\Pricing\DiscountSelectionStrategy;
 use App\Services\Pricing\HighestDiscountStrategy;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(OtpSender::class, LogOtpSender::class);
+        $this->app->bind(ShamCashGateway::class, FakeShamCashGateway::class);
         $this->app->bind(DiscountSelectionStrategy::class, HighestDiscountStrategy::class);
     }
 

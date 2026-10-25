@@ -40,7 +40,9 @@ use App\Http\Controllers\Api\V1\Catalog\SportController as CatalogSportControlle
 use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ShamCashWebhookController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\WaitlistController;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +65,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('availability', [AvailabilityController::class, 'show'])->name('availability.show');
     Route::get('app-config', [AppConfigController::class, 'show'])->name('app-config.show');
 
+    Route::post('webhooks/sham-cash', ShamCashWebhookController::class)->name('webhooks.sham-cash');
+
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('otp/request', [AuthOtpController::class, 'requestCode'])->middleware('throttle:otp-request')->name('otp.request');
         Route::post('otp/verify', [AuthOtpController::class, 'verifyCode'])->middleware('throttle:otp-verify')->name('otp.verify');
@@ -84,6 +88,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->whereNumber('subscription')->name('subscriptions.cancel');
         Route::get('waitlist', [WaitlistController::class, 'index'])->name('waitlist.index');
         Route::delete('waitlist/{waitlist_entry}', [WaitlistController::class, 'destroy'])->whereNumber('waitlist_entry')->name('waitlist.destroy');
+
+        Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('payments/sham-cash/initiate', [PaymentController::class, 'initiateShamCash'])->name('payments.sham-cash.initiate');
+        Route::get('payments/{payment}', [PaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
 
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
