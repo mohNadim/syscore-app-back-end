@@ -23,6 +23,8 @@ class RoleResource extends JsonResource
             'name_ar' => $this->name_ar,
             'name_en' => $this->name_en,
             'is_system' => $this->is_system,
+            'permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
+            'staff_count' => $this->whenCounted('staff'),
         ];
     }
 }

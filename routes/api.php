@@ -1,6 +1,10 @@
 <?php
 
+use App\Enums\PermissionCode;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\V1\Admin\PermissionController;
+use App\Http\Controllers\Api\V1\Admin\RoleController;
+use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\DeviceController;
@@ -32,6 +36,15 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::middleware(['auth:sanctum', 'staff'])->group(function () {
             Route::post('auth/logout', [AdminAuthController::class, 'logout'])->name('auth.logout');
             Route::get('me', [AdminAuthController::class, 'me'])->name('me');
+
+            Route::middleware('permission:'.PermissionCode::RolesManage->value)->group(function () {
+                Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+                Route::apiResource('roles', RoleController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::StaffManage->value)->group(function () {
+                Route::apiResource('staff', StaffController::class);
+            });
         });
     });
 });
