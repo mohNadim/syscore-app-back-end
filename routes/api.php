@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\PermissionCode;
+use App\Http\Controllers\Api\V1\Admin\AcademyController as AdminAcademyController;
+use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
 use App\Http\Controllers\Api\V1\Admin\ClosureController;
@@ -88,6 +90,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::CoachesManage->value)->group(function () {
                 Route::apiResource('coaches', AdminCoachController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::AcademiesManage->value)->group(function () {
+                Route::apiResource('academies', AdminAcademyController::class);
+                Route::apiResource('academies.groups', AcademyGroupController::class)->shallow();
             });
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
