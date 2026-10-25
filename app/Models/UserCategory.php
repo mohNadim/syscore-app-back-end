@@ -40,6 +40,6 @@ class UserCategory extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_category_members', 'category_id', 'user_id')
-            ->withPivot('assigned_by_staff_id');
+            ->withPivot('assigned_by_staff_id', 'assigned_at');
     }
 }

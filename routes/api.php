@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\SportController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
 use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
+use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\Catalog\AcademyController;
 use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
@@ -109,6 +110,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
                 Route::apiResource('price-rules', PriceRuleController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::UserCategoriesManage->value)->group(function () {
+                Route::apiResource('user-categories', UserCategoryController::class);
+                Route::get('user-categories/{user_category}/members', [UserCategoryController::class, 'members'])->name('user-categories.members.index');
+                Route::post('user-categories/{user_category}/members', [UserCategoryController::class, 'addMembers'])->name('user-categories.members.store');
+                Route::delete('user-categories/{user_category}/members/{user}', [UserCategoryController::class, 'removeMember'])->name('user-categories.members.destroy');
             });
 
             Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {

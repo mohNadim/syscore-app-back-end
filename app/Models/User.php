@@ -58,7 +58,7 @@ class User extends Authenticatable
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(UserCategory::class, 'user_category_members', 'user_id', 'category_id')
-            ->withPivot('assigned_by_staff_id');
+            ->withPivot('assigned_by_staff_id', 'assigned_at');
     }
 
     /**
