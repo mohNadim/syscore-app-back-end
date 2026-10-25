@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
 use App\Http\Controllers\Api\V1\Admin\DiscountController;
 use App\Http\Controllers\Api\V1\Admin\EnrollmentController as AdminEnrollmentController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
+use App\Http\Controllers\Api\V1\Admin\GalleryAlbumController as AdminGalleryAlbumController;
+use App\Http\Controllers\Api\V1\Admin\GalleryPhotoController;
 use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
 use App\Http\Controllers\Api\V1\Admin\NewsController as AdminNewsController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
@@ -168,6 +170,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::middleware('permission:'.PermissionCode::ContentManage->value)->group(function () {
                 Route::apiResource('news', AdminNewsController::class);
+                Route::apiResource('gallery/albums', AdminGalleryAlbumController::class);
+                Route::post('gallery/albums/{album}/photos', [GalleryPhotoController::class, 'store'])->name('gallery.albums.photos.store');
+                Route::put('gallery/photos/{photo}', [GalleryPhotoController::class, 'update'])->name('gallery.photos.update');
+                Route::delete('gallery/photos/{photo}', [GalleryPhotoController::class, 'destroy'])->name('gallery.photos.destroy');
             });
 
             Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
