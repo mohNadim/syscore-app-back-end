@@ -30,6 +30,16 @@ class Facility extends Model
     }
 
     /**
+     * Get the bookable units within this facility.
+     *
+     * @return HasMany<BookableUnit, $this>
+     */
+    public function units(): HasMany
+    {
+        return $this->hasMany(BookableUnit::class);
+    }
+
+    /**
      * Get the weekly operating hours of this facility.
      *
      * @return HasMany<OperatingHour, $this>
