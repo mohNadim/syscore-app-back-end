@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\CalendarController;
 use App\Http\Controllers\Api\V1\Admin\ClosureController;
 use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
 use App\Http\Controllers\Api\V1\Admin\DiscountController;
+use App\Http\Controllers\Api\V1\Admin\EnrollmentController as AdminEnrollmentController;
 use App\Http\Controllers\Api\V1\Admin\FacilityController;
 use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
 use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
@@ -20,8 +21,10 @@ use App\Http\Controllers\Api\V1\Admin\SettingController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
 use App\Http\Controllers\Api\V1\Admin\SportController;
 use App\Http\Controllers\Api\V1\Admin\StaffController;
+use App\Http\Controllers\Api\V1\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
 use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
+use App\Http\Controllers\Api\V1\Admin\WaitlistController as AdminWaitlistController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BookingController;
@@ -166,6 +169,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::post('bookings', [AdminBookingController::class, 'store'])->name('bookings.store');
                 Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->whereNumber('booking')->name('bookings.cancel');
                 Route::post('bookings/{booking}/no-show', [AdminBookingController::class, 'noShow'])->whereNumber('booking')->name('bookings.no-show');
+            });
+
+            Route::middleware('permission:'.PermissionCode::EnrollmentsManage->value)->group(function () {
+                Route::get('enrollments', [AdminEnrollmentController::class, 'index'])->name('enrollments.index');
+                Route::post('enrollments', [AdminEnrollmentController::class, 'store'])->name('enrollments.store');
+                Route::get('enrollments/{enrollment}', [AdminEnrollmentController::class, 'show'])->whereNumber('enrollment')->name('enrollments.show');
+                Route::post('enrollments/{enrollment}/end', [AdminEnrollmentController::class, 'end'])->whereNumber('enrollment')->name('enrollments.end');
+                Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+                Route::post('subscriptions/{subscription}/cancel', [AdminSubscriptionController::class, 'cancel'])->whereNumber('subscription')->name('subscriptions.cancel');
+                Route::get('groups/{group}/waitlist', [AdminWaitlistController::class, 'index'])->whereNumber('group')->name('groups.waitlist.index');
+                Route::post('waitlist/{waitlist_entry}/offer', [AdminWaitlistController::class, 'offer'])->whereNumber('waitlist_entry')->name('waitlist.offer');
+                Route::post('waitlist/{waitlist_entry}/remove', [AdminWaitlistController::class, 'remove'])->whereNumber('waitlist_entry')->name('waitlist.remove');
             });
 
             Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {

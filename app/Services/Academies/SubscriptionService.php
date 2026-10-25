@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class SubscriptionService
 {
     public function __construct(
+        protected EnrollmentService $enrollments,
         protected PricingService $pricing,
         protected DisplayTimezone $timezone,
         protected AuditLogger $audit,
@@ -83,6 +84,34 @@ class SubscriptionService
                 $this->scheduleEnd($locked, $enrollment);
             } else {
                 throw new UnprocessableEntityHttpException(__('subscriptions.not_cancellable'));
+            }
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Cancel a subscription immediately on behalf of staff: ending the enrollment when it is the running one, dropping it when unpaid.
+     *
+     * @todo Refund of a paid subscription is handled in phase 8.
+     *
+     * @throws UnprocessableEntityHttpException when the subscription is expired or already cancelled
+     */
+    public function cancelNow(Subscription $subscription): Subscription
+    {
+        return DB::transaction(function () use ($subscription): Subscription {
+            $enrollment = Enrollment::query()->lockForUpdate()->findOrFail($subscription->enrollment_id);
+            $locked = Subscription::query()->lockForUpdate()->findOrFail($subscription->id);
+
+            if ($locked->status === 'pending_payment') {
+                $this->cancelUnpaid($locked, $enrollment);
+            } elseif ($locked->status === 'active' && $enrollment->status === 'active') {
+                $this->enrollments->end($enrollment, null);
+            } elseif ($locked->status === 'active') {
+                $locked->update(['status' => 'cancelled']);
+                $this->audit->logChange('subscription.cancelled', $locked);
+            } else {
+                throw new UnprocessableEntityHttpException(__('admin_enrollments.subscription_not_cancellable'));
             }
 
             return $locked->refresh();
