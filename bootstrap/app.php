@@ -12,6 +12,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -35,6 +36,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->prepend(SetLocale::class);
+
+        foreach ([EnsureUser::class, EnsureStaff::class, EnsurePermission::class] as $accessMiddleware) {
+            $middleware->prependToPriorityList(SubstituteBindings::class, $accessMiddleware);
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

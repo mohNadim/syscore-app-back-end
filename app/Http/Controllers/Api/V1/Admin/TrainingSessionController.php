@@ -8,10 +8,12 @@ use App\Http\Requests\Api\V1\Admin\Sessions\IndexTrainingSessionRequest;
 use App\Http\Requests\Api\V1\Admin\Sessions\UpdateTrainingSessionRequest;
 use App\Http\Resources\TrainingSessionResource;
 use App\Models\BookableUnit;
+use App\Models\OperatingHour;
 use App\Models\TrainingSession;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
 use App\Services\Reservations\SpaceReservationService;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +60,7 @@ class TrainingSessionController extends Controller
      * @todo Notify the parents of enrolled children about the change (push notifications, phase 13).
      *
      * @throws ConflictHttpException when the session is cancelled, done or already started, or the slot is taken
-     * @throws ValidationException when the facility or a space is closed in the new interval
+     * @throws ValidationException when the facility or a space is closed in the new interval, or it lies outside the operating hours
      */
     public function update(
         UpdateTrainingSessionRequest $request,
@@ -87,6 +89,10 @@ class TrainingSessionController extends Controller
 
                 if ($reservations->closed($unit->facility_id, $spaceIds, $startsAt, $endsAt)) {
                     throw ValidationException::withMessages(['starts_at' => [__('admin_sessions.closed')]]);
+                }
+
+                if (! $this->withinOperatingHours($unit, $startsAt, $endsAt, $timezone)) {
+                    throw ValidationException::withMessages(['starts_at' => [__('admin_sessions.outside_operating_hours')]]);
                 }
 
                 if ($reservations->conflicts($spaceIds, $startsAt, $endsAt, $session->id)->isNotEmpty()) {
@@ -173,5 +179,27 @@ class TrainingSessionController extends Controller
         if (! in_array($session->status, ['scheduled', 'changed'], true) || $session->starts_at->lte(now())) {
             throw new ConflictHttpException(__('admin_sessions.session_locked'));
         }
+    }
+
+    /**
+     * Determine whether the interval falls on one local day inside the facility operating hours for that weekday.
+     */
+    protected function withinOperatingHours(BookableUnit $unit, CarbonInterface $startsAt, CarbonInterface $endsAt, DisplayTimezone $timezone): bool
+    {
+        $localStart = $startsAt->copy()->setTimezone($timezone->name());
+        $localEnd = $endsAt->copy()->setTimezone($timezone->name());
+
+        if ($localStart->toDateString() !== $localEnd->toDateString()) {
+            return false;
+        }
+
+        $hours = OperatingHour::query()
+            ->where('facility_id', $unit->facility_id)
+            ->where('weekday', $localStart->dayOfWeek)
+            ->first();
+
+        return $hours !== null
+            && $localStart->format('H:i') >= substr((string) $hours->open_time, 0, 5)
+            && $localEnd->format('H:i') <= substr((string) $hours->close_time, 0, 5);
     }
 }

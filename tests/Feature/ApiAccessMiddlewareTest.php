@@ -117,6 +117,23 @@ class ApiAccessMiddlewareTest extends TestCase
         $this->getJson('/api/v1/_test/permission')->assertForbidden();
     }
 
+    public function test_access_is_checked_before_route_model_binding(): void
+    {
+        $urls = ['/api/v1/admin/coaches/999999', '/api/v1/admin/groups/999999', '/api/v1/admin/training-sessions/999999'];
+
+        Sanctum::actingAs(User::factory()->create());
+        foreach ($urls as $url) {
+            $this->getJson($url)->assertForbidden();
+        }
+
+        Sanctum::actingAs(Staff::factory()->create(['role_id' => Role::factory()->create()->id]));
+        foreach ($urls as $url) {
+            $this->getJson($url)->assertForbidden();
+        }
+
+        $this->getJson('/api/v1/children/999999')->assertForbidden();
+    }
+
     public function test_has_permission_helper(): void
     {
         $staff = $this->staffWithPermissions(['bookings.manage']);

@@ -7,6 +7,7 @@ return [
     'session_locked' => 'Only scheduled or changed sessions that have not started yet can be modified.',
     'slot_taken' => 'The new time is already reserved on one of the unit spaces.',
     'closed' => 'The facility or one of its spaces is closed during the new time.',
+    'outside_operating_hours' => 'The new time must be inside the facility operating hours for that day.',
 
     'validation' => [
         'academy_id_invalid' => 'The academy filter must be a whole number.',
