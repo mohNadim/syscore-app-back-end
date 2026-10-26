@@ -118,7 +118,6 @@ class BookingService
             'discount_amount' => $quote->discountAmount,
             'final_price' => $quote->finalPrice,
             'deposit_amount' => $deposit,
-            // @todo Expire unpaid pending_deposit bookings once deposit_due_at passes (phase 11 job).
             'deposit_due_at' => $awaitsDeposit ? now()->addMinutes((int) $this->settings->get('booking.deposit_deadline_minutes')) : null,
             'paid_amount' => 0,
             'refund_amount' => 0,
@@ -170,6 +169,28 @@ class BookingService
             $this->audit->log('booking.cancelled', $locked, $before, ['status' => 'cancelled', 'cancel_reason' => $reason]);
 
             return $locked;
+        });
+    }
+
+    /**
+     * Expire a pending_deposit booking whose deposit deadline has passed, releasing its reservations.
+     *
+     * Returns false when the booking was paid, cancelled or is not yet overdue by the time its row is locked.
+     */
+    public function expireUnpaid(Booking $booking): bool
+    {
+        return DB::transaction(function () use ($booking): bool {
+            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+
+            if ($locked->status !== 'pending_deposit' || $locked->deposit_due_at === null || $locked->deposit_due_at->gt(now())) {
+                return false;
+            }
+
+            $locked->update(['status' => 'expired']);
+            $this->reservations->releaseForBooking($locked);
+            $this->audit->log('booking.expired', $locked, ['status' => 'pending_deposit'], ['status' => 'expired']);
+
+            return true;
         });
     }
 
