@@ -49,6 +49,7 @@ use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\ChildScheduleController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ShamCashWebhookController;
@@ -119,6 +120,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
         Route::delete('devices', [DeviceController::class, 'destroy'])->name('devices.destroy');
+
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->whereNumber('notification')->name('notifications.read');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {

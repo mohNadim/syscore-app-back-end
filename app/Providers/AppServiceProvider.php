@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\Notifications\FcmPushSender;
+use App\Services\Notifications\LogPushSender;
+use App\Services\Notifications\PushSender;
 use App\Services\Otp\LogOtpSender;
 use App\Services\Otp\OtpSender;
 use App\Services\Otp\PhoneNumber;
@@ -23,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(OtpSender::class, LogOtpSender::class);
         $this->app->bind(ShamCashGateway::class, FakeShamCashGateway::class);
+        $this->app->bind(PushSender::class, fn () => config('services.push.driver') === 'fcm' ? $this->app->make(FcmPushSender::class) : new LogPushSender);
         $this->app->bind(DiscountSelectionStrategy::class, HighestDiscountStrategy::class);
     }
 
