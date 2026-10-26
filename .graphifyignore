@@ -1,0 +1,7 @@
+# vendored AI skill copies - not project knowledge
+.agents/
+.claude/
+public/robots.txt
+
+# temporary plan doc - skip costly semantic re-extraction
+API_PLAN.md
