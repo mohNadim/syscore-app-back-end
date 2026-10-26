@@ -11,6 +11,7 @@ use App\Http\Resources\DiscountResource;
 use App\Models\Discount;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +52,7 @@ class DiscountController extends Controller
     /**
      * Create a discount together with its eligibility restrictions.
      */
-    public function store(StoreDiscountRequest $request, AuditLogger $audit): JsonResponse
+    public function store(StoreDiscountRequest $request, AuditLogger $audit, NotificationEvents $events): JsonResponse
     {
         $discount = DB::transaction(function () use ($request): Discount {
             $discount = Discount::create([
@@ -68,6 +69,7 @@ class DiscountController extends Controller
 
         $discount->load(self::RELATIONS);
         $audit->log('discount.created', $discount, null, $this->snapshot($discount));
+        $events->discountCreated($discount);
 
         return response()->json([
             'message' => __('admin_discounts.created'),

@@ -10,6 +10,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use App\Services\Payments\ShamCash\ShamCashGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ class PaymentService
         protected ShamCashGateway $gateway,
         protected DisplayTimezone $timezone,
         protected AuditLogger $audit,
+        protected NotificationEvents $events,
     ) {}
 
     /**
@@ -158,6 +160,10 @@ class PaymentService
                 $this->applyToSubscription($payment);
             }
         });
+
+        if ($payment->status === 'succeeded') {
+            $this->events->paymentSucceeded($payment);
+        }
     }
 
     /**
@@ -323,11 +329,18 @@ class PaymentService
         $before = ['status' => $booking->status, 'paid_amount' => $booking->paid_amount];
         $booking->paid_amount += $payment->amount;
 
-        if ($booking->status === 'pending_deposit') {
+        $confirmedNow = $booking->status === 'pending_deposit';
+
+        if ($confirmedNow) {
             $booking->status = 'confirmed';
         }
 
         $booking->save();
+
+        if ($confirmedNow) {
+            $this->events->bookingConfirmed($booking);
+        }
+
         $this->audit->log('booking.paid', $booking, $before, ['status' => $booking->status, 'paid_amount' => $booking->paid_amount]);
     }
 

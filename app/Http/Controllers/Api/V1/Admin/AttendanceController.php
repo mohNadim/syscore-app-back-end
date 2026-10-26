@@ -14,6 +14,7 @@ use App\Models\Enrollment;
 use App\Models\TrainingSession;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +78,7 @@ class AttendanceController extends Controller
      * @throws ConflictHttpException when the session is cancelled or has not started yet
      * @throws ValidationException when a child is not actively enrolled in the session's group
      */
-    public function update(UpdateAttendanceRequest $request, TrainingSession $trainingSession, AuditLogger $audit): JsonResponse
+    public function update(UpdateAttendanceRequest $request, TrainingSession $trainingSession, AuditLogger $audit, NotificationEvents $events): JsonResponse
     {
         $staff = $request->user();
         $records = collect($request->validated('records'));
@@ -102,6 +103,12 @@ class AttendanceController extends Controller
             ['session_id' => $trainingSession->id, 'child_id' => $record['child_id']],
             ['status' => $record['status'], 'marked_by_staff_id' => $staff->id, 'marked_at' => now()],
         )));
+
+        $saved->each(function (Attendance $attendance) use ($events): void {
+            if ($attendance->status === 'absent' && ($attendance->wasRecentlyCreated || $attendance->wasChanged('status'))) {
+                $events->childAbsent($attendance);
+            }
+        });
 
         $audit->log('attendance.marked', $trainingSession, null, ['records' => $records->all()]);
 

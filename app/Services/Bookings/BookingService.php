@@ -8,6 +8,7 @@ use App\Models\Staff;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use App\Services\Payments\PaymentService;
 use App\Services\Pricing\PricingService;
 use App\Services\Reservations\OperatingHoursChecker;
@@ -43,6 +44,7 @@ class BookingService
         protected SettingStore $settings,
         protected AuditLogger $audit,
         protected PaymentService $payments,
+        protected NotificationEvents $events,
     ) {}
 
     /**
@@ -129,6 +131,10 @@ class BookingService
 
         $this->reservations->reserveForBooking($booking, $spaceIds);
         $this->audit->log('booking.created', $booking, null, $booking->toArray());
+
+        if ($booking->status === 'confirmed') {
+            $this->events->bookingConfirmed($booking);
+        }
 
         return $booking;
     }
