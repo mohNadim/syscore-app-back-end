@@ -11,17 +11,19 @@ use App\Models\Announcement;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class AnnouncementController extends Controller
 {
     /**
-     * List announcements, newest first, paginated; optionally filtered by audience and academy.
+     * List announcements, newest first, paginated; optionally filtered by audience, academy and user category.
      */
     public function index(IndexAnnouncementRequest $request): AnonymousResourceCollection
     {
         $announcements = Announcement::query()
             ->when($request->filled('audience'), fn ($query) => $query->where('audience', $request->string('audience')->toString()))
             ->when($request->filled('academy_id'), fn ($query) => $query->where('academy_id', $request->integer('academy_id')))
+            ->when($request->filled('user_category_id'), fn ($query) => $query->where('user_category_id', $request->integer('user_category_id')))
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 15));
 
@@ -33,11 +35,19 @@ class AnnouncementController extends Controller
      */
     public function store(StoreAnnouncementRequest $request, AuditLogger $audit): JsonResponse
     {
-        $announcement = Announcement::create([
-            ...$request->announcementAttributes(),
-            'sent_by_staff_id' => $request->user()->getKey(),
-            'sent_at' => now(),
-        ])->refresh();
+        $announcement = DB::transaction(function () use ($request): Announcement {
+            $announcement = Announcement::create([
+                ...$request->announcementAttributes(),
+                'sent_by_staff_id' => $request->user()->getKey(),
+                'sent_at' => now(),
+            ]);
+
+            if ($announcement->audience === 'users') {
+                $announcement->recipients()->attach($request->recipientUserIds());
+            }
+
+            return $announcement->refresh();
+        });
 
         $audit->log('announcement.created', $announcement, null, $announcement->toArray());
 

@@ -24,8 +24,11 @@ class StoreAnnouncementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'audience' => ['bail', 'required', Rule::in(['all', 'academy'])],
+            'audience' => ['bail', 'required', Rule::in(['all', 'academy', 'category', 'users'])],
             'academy_id' => ['bail', Rule::requiredIf($this->input('audience') === 'academy'), 'nullable', 'integer', 'exists:academies,id'],
+            'user_category_id' => ['bail', Rule::requiredIf($this->input('audience') === 'category'), 'nullable', 'integer', Rule::exists('user_categories', 'id')->where('is_active', true)],
+            'user_ids' => ['bail', Rule::requiredIf($this->input('audience') === 'users'), 'nullable', 'array', 'min:1', 'max:200'],
+            'user_ids.*' => ['bail', 'integer', 'distinct', 'exists:users,id'],
             'title_ar' => ['bail', 'required', 'string', 'max:200'],
             'title_en' => ['bail', 'nullable', 'string', 'max:200'],
             'body_ar' => ['bail', 'required', 'string', 'max:5000'],
@@ -46,6 +49,16 @@ class StoreAnnouncementRequest extends FormRequest
             'academy_id.required' => __('admin_announcements.validation.academy_id_required'),
             'academy_id.integer' => __('admin_announcements.validation.academy_id_invalid'),
             'academy_id.exists' => __('admin_announcements.validation.academy_id_invalid'),
+            'user_category_id.required' => __('admin_announcements.validation.user_category_id_required'),
+            'user_category_id.integer' => __('admin_announcements.validation.user_category_id_invalid'),
+            'user_category_id.exists' => __('admin_announcements.validation.user_category_id_invalid'),
+            'user_ids.required' => __('admin_announcements.validation.user_ids_required'),
+            'user_ids.array' => __('admin_announcements.validation.user_ids_invalid'),
+            'user_ids.min' => __('admin_announcements.validation.user_ids_invalid'),
+            'user_ids.max' => __('admin_announcements.validation.user_ids_invalid'),
+            'user_ids.*.integer' => __('admin_announcements.validation.user_ids_item_invalid'),
+            'user_ids.*.distinct' => __('admin_announcements.validation.user_ids_item_invalid'),
+            'user_ids.*.exists' => __('admin_announcements.validation.user_ids_item_invalid'),
             'title_ar.required' => __('admin_announcements.validation.title_ar_required'),
             'title_ar.string' => __('admin_announcements.validation.title_ar_invalid'),
             'title_ar.max' => __('admin_announcements.validation.title_ar_invalid'),
@@ -60,18 +73,29 @@ class StoreAnnouncementRequest extends FormRequest
     }
 
     /**
-     * Get the announcement attributes; the academy is dropped for the all-users audience.
+     * Get the announcement attributes; fields that do not belong to the chosen audience are dropped.
      *
      * @return array<string, mixed>
      */
     public function announcementAttributes(): array
     {
         $data = $this->validated();
+        $audience = $data['audience'];
 
-        if ($data['audience'] === 'all') {
-            $data['academy_id'] = null;
-        }
+        $data['academy_id'] = $audience === 'academy' ? $data['academy_id'] : null;
+        $data['user_category_id'] = $audience === 'category' ? $data['user_category_id'] : null;
+        unset($data['user_ids']);
 
         return $data;
+    }
+
+    /**
+     * Get the targeted user ids for the "users" audience.
+     *
+     * @return list<int>
+     */
+    public function recipientUserIds(): array
+    {
+        return array_map('intval', $this->validated('user_ids', []));
     }
 }

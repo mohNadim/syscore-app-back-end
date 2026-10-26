@@ -45,7 +45,8 @@ class SendAnnouncement implements ShouldQueue
 
     /**
      * Active users in the announcement audience: everyone for "all"; for "academy", guardians of active children
-     * with an active enrollment and an active subscription in one of that academy's groups.
+     * with an active enrollment and an active subscription in one of that academy's groups; for "category", members
+     * of the user category; for "users", the explicitly stored recipients.
      *
      * @return Builder<User>
      */
@@ -58,6 +59,8 @@ class SendAnnouncement implements ShouldQueue
                 ->whereHas('enrollments', fn (Builder $enrollments) => $enrollments
                     ->where('status', 'active')
                     ->whereHas('group', fn (Builder $group) => $group->where('academy_id', $announcement->academy_id))
-                    ->whereHas('subscriptions', fn (Builder $subscriptions) => $subscriptions->where('status', 'active')))));
+                    ->whereHas('subscriptions', fn (Builder $subscriptions) => $subscriptions->where('status', 'active')))))
+            ->when($announcement->audience === 'category', fn (Builder $query) => $query->whereHas('categories', fn (Builder $categories) => $categories->where('user_categories.id', $announcement->user_category_id)))
+            ->when($announcement->audience === 'users', fn (Builder $query) => $query->whereIn('id', $announcement->recipients()->select('users.id')));
     }
 }

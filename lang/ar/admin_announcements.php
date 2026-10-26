@@ -6,10 +6,16 @@ return [
 
     'validation' => [
         'audience_required' => 'الجمهور المستهدف مطلوب.',
-        'audience_invalid' => 'يجب أن يكون الجمهور المستهدف إما all أو academy.',
+        'audience_invalid' => 'يجب أن يكون الجمهور المستهدف واحداً من all أو academy أو category أو users.',
         'academy_id_required' => 'الأكاديمية مطلوبة عندما يكون الجمهور المستهدف academy.',
         'academy_id_invalid' => 'الأكاديمية المحددة غير موجودة.',
         'academy_id_filter_invalid' => 'يجب أن يكون فلتر الأكاديمية عددًا صحيحًا لا يقل عن 1.',
+        'user_category_id_required' => 'فئة المستخدمين مطلوبة عندما يكون الجمهور المستهدف category.',
+        'user_category_id_invalid' => 'فئة المستخدمين المحددة غير موجودة أو غير نشطة.',
+        'user_category_id_filter_invalid' => 'يجب أن يكون فلتر فئة المستخدمين عددًا صحيحًا لا يقل عن 1.',
+        'user_ids_required' => 'قائمة المستخدمين مطلوبة عندما يكون الجمهور المستهدف users.',
+        'user_ids_invalid' => 'يجب أن تحتوي قائمة المستخدمين على ما بين 1 و200 معرّف مستخدم.',
+        'user_ids_item_invalid' => 'يجب أن يكون كل مستخدم معرّفاً فريداً لمستخدم موجود.',
         'title_ar_required' => 'عنوان الإعلان بالعربية مطلوب.',
         'title_ar_invalid' => 'عنوان الإعلان بالعربية يجب أن يكون نصاً لا يتجاوز 200 حرف.',
         'title_en_invalid' => 'عنوان الإعلان بالإنجليزية يجب أن يكون نصاً لا يتجاوز 200 حرف.',

@@ -21,6 +21,7 @@ class AnnouncementFactory extends Factory
         return [
             'audience' => 'all',
             'academy_id' => null,
+            'user_category_id' => null,
             'sent_by_staff_id' => Staff::factory(),
             'title_ar' => fake()->sentence(),
             'title_en' => fake()->sentence(),

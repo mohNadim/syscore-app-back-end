@@ -16,6 +16,7 @@ use App\Models\Role;
 use App\Models\Staff;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\UserCategory;
 use App\Services\Notifications\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -270,6 +271,132 @@ class AdminAnnouncementsTest extends TestCase
             [$subscriber->id, $twoChildrenGuardian->id],
             Notification::query()->where('announcement_id', $id)->pluck('user_id')->all()
         );
+    }
+
+    public function test_audience_category_reaches_only_active_members_of_that_category(): void
+    {
+        Queue::fake([SendPushNotification::class]);
+        $this->actingAsAnnouncer();
+        $category = UserCategory::factory()->create();
+        $otherCategory = UserCategory::factory()->create();
+        $member = User::factory()->create();
+        $inactiveMember = User::factory()->create(['is_active' => false]);
+        $otherMember = User::factory()->create();
+        $category->users()->attach([$member->id, $inactiveMember->id]);
+        $otherCategory->users()->attach($otherMember->id);
+        User::factory()->create();
+
+        $id = $this->postJson('/api/v1/admin/announcements', $this->validPayload([
+            'audience' => 'category',
+            'user_category_id' => $category->id,
+            'academy_id' => Academy::factory()->create()->id,
+            'user_ids' => [$otherMember->id],
+        ]))
+            ->assertCreated()
+            ->assertJsonPath('data.audience', 'category')
+            ->assertJsonPath('data.user_category_id', $category->id)
+            ->assertJsonPath('data.academy_id', null)
+            ->json('data.id');
+
+        $this->assertSame([$member->id], Notification::query()->where('announcement_id', $id)->pluck('user_id')->all());
+        $this->assertSame(0, Announcement::query()->findOrFail($id)->recipients()->count());
+    }
+
+    public function test_audience_users_reaches_only_listed_active_users(): void
+    {
+        Queue::fake([SendPushNotification::class]);
+        $this->actingAsAnnouncer();
+        $first = User::factory()->create();
+        $second = User::factory()->create();
+        $inactive = User::factory()->create(['is_active' => false]);
+        User::factory()->create();
+
+        $id = $this->postJson('/api/v1/admin/announcements', $this->validPayload([
+            'audience' => 'users',
+            'user_ids' => [$first->id, $second->id, $inactive->id],
+            'user_category_id' => UserCategory::factory()->create()->id,
+        ]))
+            ->assertCreated()
+            ->assertJsonPath('data.audience', 'users')
+            ->assertJsonPath('data.user_category_id', null)
+            ->json('data.id');
+
+        $this->assertEqualsCanonicalizing([$first->id, $second->id], Notification::query()->where('announcement_id', $id)->pluck('user_id')->all());
+        $this->assertSame(3, Announcement::query()->findOrFail($id)->recipients()->count());
+
+        $this->getJson("/api/v1/admin/announcements/{$id}")->assertOk()->assertJsonPath('data.recipients_count', 2);
+    }
+
+    public function test_users_audience_job_rerun_does_not_duplicate_and_reads_stored_recipients(): void
+    {
+        Queue::fake([SendPushNotification::class]);
+        $users = User::factory()->count(2)->create();
+        User::factory()->create();
+        $announcement = Announcement::factory()->create(['audience' => 'users', 'sent_at' => now()]);
+        $announcement->recipients()->attach($users->pluck('id'));
+
+        (new SendAnnouncement($announcement))->handle(app(NotificationService::class));
+        (new SendAnnouncement($announcement))->handle(app(NotificationService::class));
+
+        $this->assertSame(2, Notification::query()->where('announcement_id', $announcement->id)->count());
+    }
+
+    public function test_category_and_users_audience_validation(): void
+    {
+        $this->actingAsAnnouncer();
+        $inactiveCategory = UserCategory::factory()->create(['is_active' => false]);
+        $user = User::factory()->create();
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'category']))
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.user_category_id.0', __('admin_announcements.validation.user_category_id_required', [], 'ar'));
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'category', 'user_category_id' => $inactiveCategory->id]))
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.user_category_id.0', __('admin_announcements.validation.user_category_id_invalid', [], 'ar'));
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'category', 'user_category_id' => 999999]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_category_id');
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'users']))
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.user_ids.0', __('admin_announcements.validation.user_ids_required', [], 'ar'));
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'users', 'user_ids' => []]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_ids');
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'users', 'user_ids' => range(1, 201)]))
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.user_ids.0', __('admin_announcements.validation.user_ids_invalid', [], 'ar'));
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'users', 'user_ids' => [$user->id, 999999]]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_ids.1');
+
+        $this->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'users', 'user_ids' => [$user->id, $user->id]]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_ids.0');
+
+        $this->withHeader('Accept-Language', 'en')
+            ->postJson('/api/v1/admin/announcements', $this->validPayload(['audience' => 'users']))
+            ->assertJsonPath('errors.user_ids.0', __('admin_announcements.validation.user_ids_required', [], 'en'));
+
+        $this->assertSame(0, Announcement::query()->count());
+    }
+
+    public function test_list_filters_by_new_audiences_and_category(): void
+    {
+        $this->actingAsAnnouncer();
+        $category = UserCategory::factory()->create();
+        $byCategory = Announcement::factory()->create(['audience' => 'category', 'user_category_id' => $category->id]);
+        Announcement::factory()->create(['audience' => 'users']);
+
+        $this->getJson('/api/v1/admin/announcements?audience=category')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $byCategory->id);
+        $this->getJson('/api/v1/admin/announcements?audience=users')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson("/api/v1/admin/announcements?user_category_id={$category->id}")->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/v1/admin/announcements?user_category_id=0')->assertUnprocessable()->assertJsonValidationErrors('user_category_id');
     }
 
     public function test_job_is_idempotent_on_rerun(): void

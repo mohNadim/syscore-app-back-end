@@ -288,6 +288,7 @@
 - `GET/POST admin/announcements` و`GET admin/announcements/{id}` بصلاحية `announcements.send` (لا توجد صلاحية عرض منفصلة). الإعلانات غير قابلة للتعديل أو الحذف. `show` يعيد `recipients_count` و`push_sent_count`، والقائمة تدعم `audience` و`academy_id` و`per_page`.
 - الإنشاء يحفظ `sent_at` فوراً ويسجّل `announcement.created` ويرسل Job `SendAnnouncement` (طابور، 3 محاولات، بعد الـ commit). `title_en` و`body_en` اختياريان، ويُستخدم النص العربي في الإشعار إن غابا. `academy_id` مطلوب فقط عند `audience=academy` ويُتجاهل عند `all`.
 - المستلمون (المستخدمون `is_active` فقط): `all` = كل المستخدمين النشطين. `academy` = ولي أمر (`children.user_id`) لطفل نشط عنده تسجيل `active` في مجموعة تتبع الأكاديمية واشتراك `active`. لا يوجد تسجيل للمستخدم نفسه في المخطط، فالمشترك هو ولي الأمر.
+- **`api/announcement-audiences`**: جمهوران جديدان. `category` يتطلب `user_category_id` (فئة نشطة) والمستلمون هم الأعضاء النشطون في `user_category_members`. `users` يتطلب `user_ids` (1..200، فريدة، موجودة) وتُحفظ في الجدول الوسيط `announcement_recipients` ليقرأها الـ Job عند إعادة المحاولة؛ غير النشطين يُتخطّون بصمت. الحقول غير المطابقة للجمهور تُصفَّر/تُتجاهل، والقائمة تدعم `user_category_id`. عمود `announcements.audience` صار enum بأربع قيم (تعديل عبر ALTER في MySQL).
 - المعالجة على دفعات `chunkById(500)` عبر `NotificationService::notify` بنوع `announcement` و`announcement_id`. إعادة التشغيل آمنة: يُتخطى من لديه إشعار لنفس الإعلان.
 
 **ملاحظات `api/notification-events`:**

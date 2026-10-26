@@ -23,6 +23,7 @@ class AdminAnnouncementResource extends JsonResource
             'id' => $this->id,
             'audience' => $this->audience,
             'academy_id' => $this->academy_id,
+            'user_category_id' => $this->user_category_id,
             'title_ar' => $this->title_ar,
             'title_en' => $this->title_en,
             'body_ar' => $this->body_ar,
