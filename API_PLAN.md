@@ -274,7 +274,7 @@
 
 ### المرحلة 13 (مؤجلة): الإشعارات والإعلانات
 - `api/notifications` ✅: صندوق الإشعارات، و `read`، و `read-all`.
-- `api/admin-announcements`: الإرسال للجميع أو لمشتركي أكاديمية، عبر Job في الطابور.
+- `api/admin-announcements` ✅: الإرسال للجميع أو لمشتركي أكاديمية، عبر Job في الطابور.
 - ربط الأحداث:
   - تأكيد الحجز والدفع.
   - تذكير قبل الحجز بساعتين.
@@ -288,6 +288,12 @@
 - `GET notifications` (`unread=1` و`per_page`، و`meta.unread_count`)، و`POST notifications/{id}/read`، و`POST notifications/read-all`. إشعار مستخدم آخر يعطي 404.
 - نقطة الدخول الوحيدة للمراحل القادمة: `NotificationService::notify($user, $type, ['ar'=>..,'en'=>..], ['ar'=>..,'en'=>..], $data, $announcementId)`؛ تنشئ الصف وترسل Job `SendPushNotification` (طابور، 3 محاولات، بعد الـ commit) يضع `push_sent_at` عند نجاح الإرسال لجهاز واحد على الأقل.
 - المرسل خلف الواجهة `PushSender`، والمتغير `NOTIFICATIONS_PUSH_DRIVER=fake|fcm` (الافتراضي `fake` يكتب في السجل فقط، و`fcm` للإنتاج). مرسل FCM يختار اللغة من `users.preferred_lang` (العربية افتراضياً مع رجوع للإنجليزية)، ويحوّل قيم `data` إلى نصوص، ويحذف التوكنات unknown/invalid، ولا يرمي استثناء أبداً.
+
+**ملاحظات `api/admin-announcements`:**
+- `GET/POST admin/announcements` و`GET admin/announcements/{id}` بصلاحية `announcements.send` (لا توجد صلاحية عرض منفصلة). الإعلانات غير قابلة للتعديل أو الحذف. `show` يعيد `recipients_count` و`push_sent_count`، والقائمة تدعم `audience` و`academy_id` و`per_page`.
+- الإنشاء يحفظ `sent_at` فوراً ويسجّل `announcement.created` ويرسل Job `SendAnnouncement` (طابور، 3 محاولات، بعد الـ commit). `title_en` و`body_en` اختياريان، ويُستخدم النص العربي في الإشعار إن غابا. `academy_id` مطلوب فقط عند `audience=academy` ويُتجاهل عند `all`.
+- المستلمون (المستخدمون `is_active` فقط): `all` = كل المستخدمين النشطين. `academy` = ولي أمر (`children.user_id`) لطفل نشط عنده تسجيل `active` في مجموعة تتبع الأكاديمية واشتراك `active`. لا يوجد تسجيل للمستخدم نفسه في المخطط، فالمشترك هو ولي الأمر.
+- المعالجة على دفعات `chunkById(500)` عبر `NotificationService::notify` بنوع `announcement` و`announcement_id`. إعادة التشغيل آمنة: يُتخطى من لديه إشعار لنفس الإعلان.
 
 ### الدمج النهائي
 - [ ] `feature/api` إلى `main` بعد نجاح كل الاختبارات.
