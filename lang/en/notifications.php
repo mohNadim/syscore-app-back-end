@@ -16,7 +16,7 @@ return [
         ],
         'booking_reminder' => [
             'title' => 'Booking reminder',
-            'body' => 'Your booking at :unit starts in about two hours (:time).',
+            'body' => 'Your booking at :unit starts soon (:time).',
         ],
         'child_absent' => [
             'title' => 'Child marked absent',
@@ -24,7 +24,7 @@ return [
         ],
         'subscription_expiring' => [
             'title' => 'Subscription ending soon',
-            'body' => 'The subscription of :child in group :group ends within 7 days.',
+            'body' => 'The subscription of :child in group :group ends on :date.',
         ],
         'subscription_expired' => [
             'title' => 'Subscription expired',

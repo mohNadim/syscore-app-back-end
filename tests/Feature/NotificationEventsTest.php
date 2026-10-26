@@ -18,6 +18,7 @@ use App\Models\OperatingHour;
 use App\Models\Payment;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Setting;
 use App\Models\Space;
 use App\Models\Sport;
 use App\Models\Staff;
@@ -235,6 +236,38 @@ class NotificationEventsTest extends TestCase
         $this->assertSame(1, Notification::query()->where('type', 'subscription_expiring')->where('data->subscription_id', $expiring->id)->count());
         $this->assertSame(1, Notification::query()->where('type', 'subscription_expired')->where('data->subscription_id', $expiring->id)->count());
         Queue::assertPushed(SendPushNotification::class);
+    }
+
+    public function test_booking_reminder_window_follows_the_setting(): void
+    {
+        Queue::fake();
+        $inside = Booking::factory()->create(['starts_at' => now()->addHours(5), 'ends_at' => now()->addHours(6)]);
+        $outside = Booking::factory()->create(['starts_at' => now()->addHours(9), 'ends_at' => now()->addHours(10)]);
+
+        $this->artisan('bookings:send-reminders')->expectsOutput('Sent 0 booking reminders.')->assertSuccessful();
+
+        Setting::query()->create(['key' => 'academy.booking_reminder_hours', 'value' => 6]);
+
+        $this->artisan('bookings:send-reminders')->expectsOutput('Sent 1 booking reminders.')->assertSuccessful();
+        $this->assertNotNull($inside->refresh()->reminder_sent_at);
+        $this->assertNull($outside->refresh()->reminder_sent_at);
+    }
+
+    public function test_subscription_expiry_notice_window_follows_the_setting(): void
+    {
+        Queue::fake();
+        $near = Subscription::factory()->active()->create(['period_end' => now()->addDays(10)]);
+
+        $this->artisan('subscriptions:send-expiry-notices')->assertSuccessful();
+        $this->assertNull($near->refresh()->reminder_7d_sent_at);
+
+        Setting::query()->create(['key' => 'academy.subscription_expiry_notice_days', 'value' => 14]);
+
+        $this->artisan('subscriptions:send-expiry-notices')->assertSuccessful();
+        $this->artisan('subscriptions:send-expiry-notices')->assertSuccessful();
+
+        $this->assertNotNull($near->refresh()->reminder_7d_sent_at);
+        $this->assertSame(1, Notification::query()->where('type', 'subscription_expiring')->count());
     }
 
     public function test_cancelling_a_session_notifies_each_guardian_once(): void

@@ -256,6 +256,7 @@
 - الأوامر: `bookings:expire-unpaid` (كل دقيقة)، و`subscriptions:expire-unpaid` و`subscriptions:expire` و`enrollments:end-scheduled` و`waitlist:expire-offers` (كل ساعة)، و`sessions:generate` (يومياً 02:00). التشغيل على السيرفر يحتاج `schedule:run` في cron.
 - كل أمر يعيد فحص الصف بقفل داخل transaction، فالتكرار آمن. عرض الانتظار المنتهي يصبح `removed`.
 - إعداد جديد `academy.waitlist_offer_hours` (24). توليد الجلسات يتخطى جدولاً متعارضاً ويكمل البقية.
+- إعدادان جديدان قابلان للضبط عبر `PUT /admin/settings`: `academy.booking_reminder_hours` (2، بين 1 و72) لأمر `bookings:send-reminders`، و`academy.subscription_expiry_notice_days` (7، بين 1 و60) لأمر `subscriptions:send-expiry-notices` (العمود `reminder_7d_sent_at` يبقى علم عدم التكرار). نص الإشعارين لم يعد يذكر المدة.
 
 ### المرحلة 12: التقارير والسجل ✅ مدمجة في `feature/api`
 - `api/admin-reports`:
