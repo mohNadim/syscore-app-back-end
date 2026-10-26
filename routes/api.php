@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
 use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Api\V1\Admin\PermissionController;
 use App\Http\Controllers\Api\V1\Admin\PriceRuleController;
+use App\Http\Controllers\Api\V1\Admin\ReportController;
 use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\SettingController;
 use App\Http\Controllers\Api\V1\Admin\SpaceController;
@@ -247,6 +248,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::middleware('permission:'.PermissionCode::SettingsManage->value)->group(function () {
                 Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
                 Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+            });
+
+            Route::middleware('permission:'.PermissionCode::ReportsView->value)->prefix('reports')->name('reports.')->group(function () {
+                Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
+                Route::get('occupancy', [ReportController::class, 'occupancy'])->name('occupancy');
+                Route::get('subscriptions', [ReportController::class, 'subscriptions'])->name('subscriptions');
+                Route::get('discounts', [ReportController::class, 'discounts'])->name('discounts');
             });
 
             Route::middleware('permission:'.PermissionCode::AuditLogsView->value)->group(function () {
