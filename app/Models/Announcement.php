@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['audience', 'academy_id', 'title_ar', 'title_en', 'body_ar', 'body_en', 'sent_by_staff_id', 'sent_at'])]
+#[Fillable(['audience', 'academy_id', 'user_category_id', 'title_ar', 'title_en', 'body_ar', 'body_en', 'sent_by_staff_id', 'sent_at'])]
 class Announcement extends Model
 {
     /** @use HasFactory<AnnouncementFactory> */
@@ -28,6 +29,26 @@ class Announcement extends Model
     public function academy(): BelongsTo
     {
         return $this->belongsTo(Academy::class);
+    }
+
+    /**
+     * Get the user category this announcement targets.
+     *
+     * @return BelongsTo<UserCategory, $this>
+     */
+    public function userCategory(): BelongsTo
+    {
+        return $this->belongsTo(UserCategory::class);
+    }
+
+    /**
+     * Get the explicitly targeted users (only for the "users" audience).
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function recipients(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'announcement_recipients', 'announcement_id', 'user_id');
     }
 
     /**
