@@ -4,6 +4,7 @@ use App\Enums\PermissionCode;
 use App\Http\Controllers\Api\V1\Admin\AcademyController as AdminAcademyController;
 use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
 use App\Http\Controllers\Api\V1\Admin\AttendanceController;
+use App\Http\Controllers\Api\V1\Admin\AuditLogController;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
 use App\Http\Controllers\Api\V1\Admin\BookingController as AdminBookingController;
@@ -246,6 +247,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::middleware('permission:'.PermissionCode::SettingsManage->value)->group(function () {
                 Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
                 Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+            });
+
+            Route::middleware('permission:'.PermissionCode::AuditLogsView->value)->group(function () {
+                Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+                Route::get('audit-logs/{audit_log}', [AuditLogController::class, 'show'])->whereNumber('audit_log')->name('audit-logs.show');
             });
         });
     });
