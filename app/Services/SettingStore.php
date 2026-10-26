@@ -24,8 +24,8 @@ class SettingStore
         'otp.resend_cooldown_seconds' => 60,
         'subscription.expiry_reminder_days' => 7,
         'academy.session_generation_days' => 28,
-        // @todo Used by the phase 11 job that cancels enrollments whose first subscription stays unpaid.
         'academy.enrollment_payment_hours' => 48,
+        'academy.waitlist_offer_hours' => 24,
         'app.display_timezone' => 'Asia/Damascus',
         'app.contact' => [
             'phone' => null,

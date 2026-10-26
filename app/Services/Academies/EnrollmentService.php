@@ -11,6 +11,7 @@ use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
 use App\Services\Pricing\PricingService;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -167,7 +168,7 @@ class EnrollmentService
     /**
      * Offer a free seat to a waiting child; the seat is held until the child enrolls or the offer is withdrawn.
      *
-     * @todo Notify the parent (phase 13) and expire unanswered offers (phase 11).
+     * @todo Notify the parent (phase 13).
      *
      * @throws UnprocessableEntityHttpException when the entry is not waiting
      * @throws ConflictHttpException when the group has no free seat
@@ -190,6 +191,47 @@ class EnrollmentService
             $this->audit->logChange('waitlist.offered', $locked);
 
             return $locked->refresh();
+        });
+    }
+
+    /**
+     * Withdraw an offer the parent did not answer in time, which frees the held seat for the next offer.
+     *
+     * Returns false when the entry is no longer offered or the offer is not yet overdue by the time its row is locked.
+     */
+    public function expireOffer(WaitlistEntry $entry, CarbonInterface $olderThan): bool
+    {
+        return DB::transaction(function () use ($entry, $olderThan): bool {
+            $locked = WaitlistEntry::query()->lockForUpdate()->findOrFail($entry->id);
+
+            if ($locked->status !== 'offered' || $locked->offered_at === null || $locked->offered_at->gt($olderThan)) {
+                return false;
+            }
+
+            $locked->update(['status' => 'removed']);
+            $this->audit->logChange('waitlist.offer_expired', $locked);
+
+            return true;
+        });
+    }
+
+    /**
+     * End an active enrollment whose scheduled end (set when the parent cancelled) has passed.
+     *
+     * Returns false when the enrollment is no longer active or its end is not yet due by the time its row is locked.
+     */
+    public function endScheduled(Enrollment $enrollment): bool
+    {
+        return DB::transaction(function () use ($enrollment): bool {
+            $locked = Enrollment::query()->lockForUpdate()->findOrFail($enrollment->id);
+
+            if ($locked->status !== 'active' || $locked->ended_at === null || $locked->ended_at->gt(now())) {
+                return false;
+            }
+
+            $this->end($locked, 'scheduled_end');
+
+            return true;
         });
     }
 

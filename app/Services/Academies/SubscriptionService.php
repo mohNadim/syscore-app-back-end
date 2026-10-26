@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
 use App\Services\Pricing\PricingService;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -119,6 +120,48 @@ class SubscriptionService
     }
 
     /**
+     * Cancel a pending_payment subscription created before the cutoff; the enrollment is cancelled with it when it has nothing active.
+     *
+     * Returns false when the subscription was paid or is not yet overdue by the time its row is locked.
+     */
+    public function expireUnpaid(Subscription $subscription, CarbonInterface $createdBefore): bool
+    {
+        return DB::transaction(function () use ($subscription, $createdBefore): bool {
+            $enrollment = Enrollment::query()->lockForUpdate()->findOrFail($subscription->enrollment_id);
+            $locked = Subscription::query()->lockForUpdate()->findOrFail($subscription->id);
+
+            if ($locked->status !== 'pending_payment' || $locked->created_at->gt($createdBefore)) {
+                return false;
+            }
+
+            $this->cancelUnpaid($locked, $enrollment);
+
+            return true;
+        });
+    }
+
+    /**
+     * Mark an active subscription whose period has ended as expired.
+     *
+     * Returns false when it is no longer active or its period has not ended by the time its row is locked.
+     */
+    public function expirePeriod(Subscription $subscription): bool
+    {
+        return DB::transaction(function () use ($subscription): bool {
+            $locked = Subscription::query()->lockForUpdate()->findOrFail($subscription->id);
+
+            if ($locked->status !== 'active' || $locked->period_end === null || $locked->period_end->gt(now())) {
+                return false;
+            }
+
+            $locked->update(['status' => 'expired']);
+            $this->audit->logChange('subscription.expired', $locked);
+
+            return true;
+        });
+    }
+
+    /**
      * Cancel an unpaid subscription; when the enrollment then has no active subscription it is cancelled too, freeing the seat.
      */
     protected function cancelUnpaid(Subscription $subscription, Enrollment $enrollment): void
@@ -134,8 +177,6 @@ class SubscriptionService
 
     /**
      * Keep the paid month and set the enrollment to end when it runs out; unpaid renewals are dropped.
-     *
-     * @todo The phase 11 job ends the enrollment once its scheduled end passes.
      */
     protected function scheduleEnd(Subscription $subscription, Enrollment $enrollment): void
     {
