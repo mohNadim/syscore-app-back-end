@@ -16,7 +16,7 @@ return [
         ],
         'booking_reminder' => [
             'title' => 'تذكير بحجزك',
-            'body' => 'يبدأ حجزك في :unit خلال ساعتين تقريبًا (:time).',
+            'body' => 'يبدأ حجزك في :unit قريبًا (:time).',
         ],
         'child_absent' => [
             'title' => 'غياب الطفل',
@@ -24,7 +24,7 @@ return [
         ],
         'subscription_expiring' => [
             'title' => 'اشتراك على وشك الانتهاء',
-            'body' => 'ينتهي اشتراك :child في مجموعة :group خلال 7 أيام أو أقل.',
+            'body' => 'ينتهي اشتراك :child في مجموعة :group في :date.',
         ],
         'subscription_expired' => [
             'title' => 'انتهى الاشتراك',

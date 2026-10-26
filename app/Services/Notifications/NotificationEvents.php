@@ -169,6 +169,7 @@ class NotificationEvents
         return $this->attempt(fn () => $this->send($user, $type, $type, [
             'child' => $this->pair($enrollment->child->full_name, $enrollment->child->full_name),
             'group' => $this->pair($enrollment->group?->name_ar, $enrollment->group?->name_en),
+            'date' => $this->pair($this->localTime($subscription->period_end), $this->localTime($subscription->period_end)),
         ], ['subscription_id' => $subscription->id, 'child_id' => $enrollment->child_id]));
     }
 

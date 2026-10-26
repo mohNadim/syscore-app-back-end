@@ -30,6 +30,8 @@ class UpdateSettingsRequest extends FormRequest
         'academy.session_generation_days' => ['sometimes', 'integer', 'between:1,180'],
         'academy.enrollment_payment_hours' => ['sometimes', 'integer', 'between:1,720'],
         'academy.waitlist_offer_hours' => ['sometimes', 'integer', 'between:1,720'],
+        'academy.booking_reminder_hours' => ['sometimes', 'integer', 'between:1,72'],
+        'academy.subscription_expiry_notice_days' => ['sometimes', 'integer', 'between:1,60'],
         'app.display_timezone' => ['sometimes', 'string', 'timezone:all'],
         'app.contact' => ['sometimes', 'array'],
     ];

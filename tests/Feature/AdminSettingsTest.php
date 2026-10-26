@@ -65,6 +65,8 @@ class AdminSettingsTest extends TestCase
             ->assertJsonPath('data.subscription.expiry_reminder_days', 7)
             ->assertJsonPath('data.academy.session_generation_days', 28)
             ->assertJsonPath('data.academy.enrollment_payment_hours', 48)
+            ->assertJsonPath('data.academy.booking_reminder_hours', 2)
+            ->assertJsonPath('data.academy.subscription_expiry_notice_days', 7)
             ->assertJsonPath('data.app.display_timezone', 'Asia/Damascus')
             ->assertJsonPath('data.app.contact.phone', null)
             ->assertJsonPath('meta.updated_at', null);
@@ -168,6 +170,27 @@ class AdminSettingsTest extends TestCase
             ->assertStatus(422)
             ->assertJson(['errors' => ['booking.deposit_percent' => ['The deposit percentage must be a whole number from 0 to 100.']]])
             ->assertJson(['errors' => ['otp.channel' => ['The verification channel must be one of: sms, whatsapp, telegram.']]]);
+    }
+
+    public function test_notification_timings_are_updatable_and_validated_in_both_languages(): void
+    {
+        $this->actingAsSettingsManager();
+
+        $this->putJson(self::URL, ['academy' => ['booking_reminder_hours' => 6, 'subscription_expiry_notice_days' => 14]])
+            ->assertOk()
+            ->assertJsonPath('data.academy.booking_reminder_hours', 6)
+            ->assertJsonPath('data.academy.subscription_expiry_notice_days', 14);
+
+        $this->putJson(self::URL, ['academy' => ['booking_reminder_hours' => 73, 'subscription_expiry_notice_days' => 0]])
+            ->assertStatus(422)
+            ->assertJson(['errors' => ['academy.booking_reminder_hours' => [__('admin_settings.validation.booking_reminder_hours')]]])
+            ->assertJson(['errors' => ['academy.subscription_expiry_notice_days' => [__('admin_settings.validation.subscription_expiry_notice_days')]]]);
+
+        $this->withHeader('Accept-Language', 'en')
+            ->putJson(self::URL, ['academy' => ['booking_reminder_hours' => 0, 'subscription_expiry_notice_days' => 61]])
+            ->assertStatus(422)
+            ->assertJson(['errors' => ['academy.booking_reminder_hours' => ['The booking reminder window must be a whole number of hours from 1 to 72.']]])
+            ->assertJson(['errors' => ['academy.subscription_expiry_notice_days' => ['The subscription expiry notice window must be a whole number of days from 1 to 60.']]]);
     }
 
     public function test_empty_body_is_rejected(): void
