@@ -3,6 +3,7 @@
 use App\Enums\PermissionCode;
 use App\Http\Controllers\Api\V1\Admin\AcademyController as AdminAcademyController;
 use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
+use App\Http\Controllers\Api\V1\Admin\AnnouncementController;
 use App\Http\Controllers\Api\V1\Admin\AttendanceController;
 use App\Http\Controllers\Api\V1\Admin\AuditLogController;
 use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
@@ -260,6 +261,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 Route::get('occupancy', [ReportController::class, 'occupancy'])->name('occupancy');
                 Route::get('subscriptions', [ReportController::class, 'subscriptions'])->name('subscriptions');
                 Route::get('discounts', [ReportController::class, 'discounts'])->name('discounts');
+            });
+
+            Route::middleware('permission:'.PermissionCode::AnnouncementsSend->value)->group(function () {
+                Route::apiResource('announcements', AnnouncementController::class)->only(['index', 'store', 'show']);
             });
 
             Route::middleware('permission:'.PermissionCode::AuditLogsView->value)->group(function () {
