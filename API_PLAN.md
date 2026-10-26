@@ -275,14 +275,8 @@
 ### المرحلة 13 (مؤجلة): الإشعارات والإعلانات
 - `api/notifications` ✅: صندوق الإشعارات، و `read`، و `read-all`.
 - `api/admin-announcements` ✅: الإرسال للجميع أو لمشتركي أكاديمية، عبر Job في الطابور.
-- ربط الأحداث:
-  - تأكيد الحجز والدفع.
-  - تذكير قبل الحجز بساعتين.
-  - غياب الطفل.
-  - انتهاء الاشتراك (قبل 7 أيام ويوم الانتهاء).
-  - إلغاء أو تعديل جلسة.
-  - خصم جديد.
-- Firebase جاهز في الباكند (الحزمة والاعتمادات والإعداد)، ولا يبقى إلا بناء خدمة الإرسال وربط الأحداث. تحتاج أيضاً أن يُكمل تطبيق Flutter ربط Firebase (انظر آخر الملف).
+- `api/notification-events` ✅: ربط الأحداث (تأكيد الحجز والدفع، تذكير قبل ساعتين، غياب الطفل، انتهاء الاشتراك، إلغاء/تعديل جلسة، خصم جديد).
+- Firebase جاهز في الباكند بالكامل. تحتاج أيضاً أن يُكمل تطبيق Flutter ربط Firebase (انظر آخر الملف).
 
 **ملاحظات `api/notifications`:**
 - `GET notifications` (`unread=1` و`per_page`، و`meta.unread_count`)، و`POST notifications/{id}/read`، و`POST notifications/read-all`. إشعار مستخدم آخر يعطي 404.
@@ -294,6 +288,15 @@
 - الإنشاء يحفظ `sent_at` فوراً ويسجّل `announcement.created` ويرسل Job `SendAnnouncement` (طابور، 3 محاولات، بعد الـ commit). `title_en` و`body_en` اختياريان، ويُستخدم النص العربي في الإشعار إن غابا. `academy_id` مطلوب فقط عند `audience=academy` ويُتجاهل عند `all`.
 - المستلمون (المستخدمون `is_active` فقط): `all` = كل المستخدمين النشطين. `academy` = ولي أمر (`children.user_id`) لطفل نشط عنده تسجيل `active` في مجموعة تتبع الأكاديمية واشتراك `active`. لا يوجد تسجيل للمستخدم نفسه في المخطط، فالمشترك هو ولي الأمر.
 - المعالجة على دفعات `chunkById(500)` عبر `NotificationService::notify` بنوع `announcement` و`announcement_id`. إعادة التشغيل آمنة: يُتخطى من لديه إشعار لنفس الإعلان.
+
+**ملاحظات `api/notification-events`:**
+- الصنف `App\Services\Notifications\NotificationEvents` هو نقطة الربط الوحيدة: يبني النصوص من `lang/{ar,en}/notifications.php` (مفتاح `events`) ويستدعي `NotificationService::notify`. الأحداث المرتبطة بتغيّر حالة تُنفَّذ بعد الـ commit (`DB::afterCommit`)، وأي استثناء يُسجَّل بـ `report()` ولا يُرمى أبداً فلا يتأثر الإجراء الأساسي.
+- `booking_confirmed`: عند التحويل إلى `confirmed` بدفعة (PaymentService) أو عند إنشاء حجز مؤكد مباشرة لمستخدم. `payment_succeeded`: لصاحب الدفعة عند بقاء حالتها `succeeded` (لا يُرسل إن استُردت لأن الهدف مغلق). الحجوزات بلا مستخدم (ضيف) لا إشعار لها.
+- `booking_reminder`: الأمر `bookings:send-reminders` كل 5 دقائق لحجوزات `confirmed` تبدأ خلال ساعتين، ويستخدم العمود الموجود `bookings.reminder_sent_at` لمنع التكرار (دون migration جديد).
+- `child_absent`: لولي الأمر فقط عند الانتقال إلى `absent` (إنشاء جديد أو تغيّر الحالة)، وإعادة الحفظ لا ترسل.
+- `subscription_expiring` / `subscription_expired`: الأمر `subscriptions:send-expiry-notices` يومياً 09:00، ويستخدم `reminder_7d_sent_at` و `expiry_notice_sent_at`. إشعار الانتهاء يُرسل لاشتراك `active`/`expired` انتهى خلال آخر يومين.
+- `session_cancelled` / `session_updated`: لأولياء أمور تسجيلات `active` في المجموعة (مرة لكل مستخدم، المستخدمون النشطون فقط). التعديل يُشعِر فقط عند تغيّر الوقت أو الوحدة (تغيير المدرب وحده لا يرسل).
+- `discount_created`: Job `SendDiscountNotification` (طابور، 3 محاولات، دفعات 500) يُرسل لكل المستخدمين النشطين فقط إذا كان الخصم فعّالاً وساري المفعول الآن و`notify_users=true`، ويتخطى من لديه إشعار لنفس الخصم.
 
 ### الدمج النهائي
 - [ ] `feature/api` إلى `main` بعد نجاح كل الاختبارات.
@@ -312,7 +315,7 @@
 
 **المتبقي في الباكند (المرحلة 13):**
 - [x] خدمة إرسال تستخدم `firebase.messaging`، وتحذف التوكنات غير الصالحة من `user_devices`.
-- [ ] Job في الطابور، وربط الأحداث، وجدول وendpoints الإشعارات والإعلانات.
+- [x] Job في الطابور، وربط الأحداث، وجدول وendpoints الإشعارات والإعلانات.
 
 **المتبقي في تطبيق Flutter (مسجّل كتذكير):**
 - [ ] إضافة `firebase_core` و `firebase_messaging` في `pubspec.yaml`.

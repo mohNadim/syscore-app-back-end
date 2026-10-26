@@ -11,6 +11,7 @@ use App\Models\BookableUnit;
 use App\Models\TrainingSession;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use App\Services\Reservations\OperatingHoursChecker;
 use App\Services\Reservations\SpaceReservationService;
 use Illuminate\Http\JsonResponse;
@@ -56,7 +57,7 @@ class TrainingSessionController extends Controller
      * Spaces of the target unit are locked first, then closures (422) and conflicts ignoring this session
      * (409 slot_taken) are checked; the old reservations are deactivated and new ones created.
      *
-     * @todo Notify the parents of enrolled children about the change (push notifications, phase 13).
+     * Guardians of the group are notified only when the time or room really changed.
      *
      * @throws ConflictHttpException when the session is cancelled, done or already started, or the slot is taken
      * @throws ValidationException when the facility or a space is closed in the new interval, or it lies outside the operating hours
@@ -68,10 +69,11 @@ class TrainingSessionController extends Controller
         OperatingHoursChecker $hours,
         DisplayTimezone $timezone,
         AuditLogger $audit,
+        NotificationEvents $events,
     ): JsonResponse {
         $before = $trainingSession->toArray();
 
-        DB::transaction(function () use ($request, $trainingSession, $reservations, $hours, $timezone): void {
+        $moved = DB::transaction(function () use ($request, $trainingSession, $reservations, $hours, $timezone): bool {
             $session = TrainingSession::query()->lockForUpdate()->findOrFail($trainingSession->id);
             $this->ensureChangeable($session);
 
@@ -123,9 +125,15 @@ class TrainingSessionController extends Controller
 
             $trainingSession->setRawAttributes($session->getAttributes(), true);
             $trainingSession->setRelations([]);
+
+            return $moved;
         });
 
         $audit->log('training_session.updated', $trainingSession, $before, $trainingSession->toArray());
+
+        if ($moved) {
+            $events->sessionUpdated($trainingSession);
+        }
 
         return response()->json([
             'message' => __('admin_sessions.session_updated'),
@@ -136,7 +144,7 @@ class TrainingSessionController extends Controller
     /**
      * Cancel a session that has not started and free its spaces.
      *
-     * @todo Notify the parents of enrolled children about the cancellation (push notifications, phase 13).
+     * Guardians of the group are notified of the cancellation.
      *
      * @throws ConflictHttpException when the session is cancelled, done or already started
      */
@@ -145,6 +153,7 @@ class TrainingSessionController extends Controller
         TrainingSession $trainingSession,
         SpaceReservationService $reservations,
         AuditLogger $audit,
+        NotificationEvents $events,
     ): JsonResponse {
         $before = $trainingSession->toArray();
 
@@ -162,6 +171,7 @@ class TrainingSessionController extends Controller
         });
 
         $audit->log('training_session.cancelled', $trainingSession, $before, $trainingSession->toArray());
+        $events->sessionCancelled($trainingSession);
 
         return response()->json([
             'message' => __('admin_sessions.session_cancelled'),
