@@ -1,0 +1,82 @@
+<?php
+
+return [
+
+    'attributes' => [
+        'date_from' => 'تاريخ البداية',
+        'date_to' => 'تاريخ النهاية',
+        'format' => 'الصيغة',
+        'group_by' => 'التجميع',
+        'facility_id' => 'المنشأة',
+        'sport_id' => 'الرياضة',
+    ],
+
+    'validation' => [
+        'date_required' => 'نطاق التاريخ مطلوب.',
+        'date_invalid' => 'يجب أن يكون التاريخ بصيغة YYYY-MM-DD.',
+        'date_to_after_from' => 'لا يمكن أن يسبق تاريخ النهاية تاريخ البداية.',
+        'range_too_long' => 'لا يمكن أن يتجاوز نطاق التاريخ :days يومًا.',
+        'format_invalid' => 'يجب أن تكون الصيغة json أو xlsx.',
+        'group_by_invalid' => 'يجب أن يكون التجميع day أو month.',
+        'facility_id_invalid' => 'يجب أن يكون فلتر المنشأة عددًا صحيحًا لا يقل عن 1.',
+        'sport_id_invalid' => 'يجب أن يكون فلتر الرياضة عددًا صحيحًا لا يقل عن 1.',
+    ],
+
+    'values' => [
+        'cash' => 'نقدًا',
+        'sham_cash' => 'شام كاش',
+        'booking' => 'حجز',
+        'subscription' => 'اشتراك',
+        'pending_payment' => 'بانتظار الدفع',
+        'active' => 'نشط',
+        'expired' => 'منتهي',
+        'cancelled' => 'ملغى',
+    ],
+
+    'columns' => [
+        'period' => 'الفترة',
+        'method' => 'الطريقة',
+        'target' => 'النوع',
+        'payments_count' => 'عدد الدفعات',
+        'gross' => 'الإيراد',
+        'refunded' => 'المسترد',
+        'net' => 'الصافي',
+        'facility_name_ar' => 'المنشأة (عربي)',
+        'facility_name_en' => 'المنشأة (إنجليزي)',
+        'unit_code' => 'رمز الوحدة',
+        'name_ar' => 'الاسم (عربي)',
+        'name_en' => 'الاسم (إنجليزي)',
+        'booked_hours' => 'الساعات المحجوزة',
+        'available_hours' => 'الساعات المتاحة',
+        'occupancy_percent' => 'نسبة الإشغال %',
+        'academy_name_ar' => 'الأكاديمية (عربي)',
+        'academy_name_en' => 'الأكاديمية (إنجليزي)',
+        'group_name_ar' => 'المجموعة (عربي)',
+        'group_name_en' => 'المجموعة (إنجليزي)',
+        'status' => 'الحالة',
+        'count' => 'العدد',
+        'new_in_range' => 'الجديدة في النطاق',
+        'expired_in_range' => 'المنتهية في النطاق',
+        'active_now' => 'النشطة الآن',
+        'metric' => 'المؤشر',
+        'value' => 'القيمة',
+        'usage_count' => 'عدد الاستخدامات',
+        'bookings_count' => 'الحجوزات',
+        'subscriptions_count' => 'الاشتراكات',
+        'total_discount' => 'إجمالي الخصم',
+    ],
+
+    'sheets' => [
+        'summary' => 'الملخص',
+        'by_period' => 'حسب الفترة',
+        'by_method' => 'حسب الطريقة',
+        'by_target' => 'حسب النوع',
+        'units' => 'الوحدات',
+        'facilities' => 'المنشآت',
+        'by_status' => 'حسب الحالة',
+        'groups' => 'المجموعات',
+        'discounts' => 'الخصومات',
+        'categories' => 'فئات المستخدمين',
+    ],
+
+];

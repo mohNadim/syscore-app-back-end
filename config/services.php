@@ -28,6 +28,16 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'sham_cash' => [
+        'driver' => env('SHAM_CASH_DRIVER', 'fake'),
+        'webhook_secret' => env('SHAM_CASH_WEBHOOK_SECRET', 'local-sham-cash-secret'),
+        'checkout_url' => env('SHAM_CASH_CHECKOUT_URL', 'https://pay.sham-cash.test/checkout'),
+    ],
+
+    'push' => [
+        'driver' => env('NOTIFICATIONS_PUSH_DRIVER', 'fake'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -1,0 +1,276 @@
+<?php
+
+use App\Enums\PermissionCode;
+use App\Http\Controllers\Api\V1\Admin\AcademyController as AdminAcademyController;
+use App\Http\Controllers\Api\V1\Admin\AcademyGroupController;
+use App\Http\Controllers\Api\V1\Admin\AnnouncementController;
+use App\Http\Controllers\Api\V1\Admin\AttendanceController;
+use App\Http\Controllers\Api\V1\Admin\AuditLogController;
+use App\Http\Controllers\Api\V1\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\V1\Admin\BookableUnitController;
+use App\Http\Controllers\Api\V1\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Api\V1\Admin\CalendarController;
+use App\Http\Controllers\Api\V1\Admin\ClosureController;
+use App\Http\Controllers\Api\V1\Admin\CoachController as AdminCoachController;
+use App\Http\Controllers\Api\V1\Admin\DiscountController;
+use App\Http\Controllers\Api\V1\Admin\EnrollmentController as AdminEnrollmentController;
+use App\Http\Controllers\Api\V1\Admin\FacilityController;
+use App\Http\Controllers\Api\V1\Admin\GalleryAlbumController as AdminGalleryAlbumController;
+use App\Http\Controllers\Api\V1\Admin\GalleryPhotoController;
+use App\Http\Controllers\Api\V1\Admin\GroupScheduleController;
+use App\Http\Controllers\Api\V1\Admin\NewsController as AdminNewsController;
+use App\Http\Controllers\Api\V1\Admin\OperatingHourController;
+use App\Http\Controllers\Api\V1\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Api\V1\Admin\PermissionController;
+use App\Http\Controllers\Api\V1\Admin\PriceRuleController;
+use App\Http\Controllers\Api\V1\Admin\ReportController;
+use App\Http\Controllers\Api\V1\Admin\RoleController;
+use App\Http\Controllers\Api\V1\Admin\SettingController;
+use App\Http\Controllers\Api\V1\Admin\SpaceController;
+use App\Http\Controllers\Api\V1\Admin\SportController;
+use App\Http\Controllers\Api\V1\Admin\StaffController;
+use App\Http\Controllers\Api\V1\Admin\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
+use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
+use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\WaitlistController as AdminWaitlistController;
+use App\Http\Controllers\Api\V1\AuthOtpController;
+use App\Http\Controllers\Api\V1\AvailabilityController;
+use App\Http\Controllers\Api\V1\BookingController;
+use App\Http\Controllers\Api\V1\BookingQuoteController;
+use App\Http\Controllers\Api\V1\BookingSeriesController;
+use App\Http\Controllers\Api\V1\Catalog\AcademyController;
+use App\Http\Controllers\Api\V1\Catalog\AppConfigController;
+use App\Http\Controllers\Api\V1\Catalog\CoachController;
+use App\Http\Controllers\Api\V1\Catalog\FacilityController as CatalogFacilityController;
+use App\Http\Controllers\Api\V1\Catalog\GalleryAlbumController;
+use App\Http\Controllers\Api\V1\Catalog\NewsController;
+use App\Http\Controllers\Api\V1\Catalog\SportController as CatalogSportController;
+use App\Http\Controllers\Api\V1\ChildController;
+use App\Http\Controllers\Api\V1\ChildScheduleController;
+use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\EnrollmentController;
+use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ShamCashWebhookController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
+use App\Http\Controllers\Api\V1\WaitlistController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('v1')->name('api.v1.')->group(function () {
+    Route::get('ping', fn () => response()->json(['message' => __('api.pong')]))->name('ping');
+
+    Route::get('facilities', [CatalogFacilityController::class, 'index'])->name('facilities.index');
+    Route::get('facilities/{facility}', [CatalogFacilityController::class, 'show'])->name('facilities.show');
+    Route::get('sports', [CatalogSportController::class, 'index'])->name('sports.index');
+    Route::get('coaches', [CoachController::class, 'index'])->name('coaches.index');
+    Route::get('coaches/{coach}', [CoachController::class, 'show'])->name('coaches.show');
+    Route::get('academies', [AcademyController::class, 'index'])->name('academies.index');
+    Route::get('academies/{academy}', [AcademyController::class, 'show'])->name('academies.show');
+    Route::get('news', [NewsController::class, 'index'])->name('news.index');
+    Route::get('news/{news}', [NewsController::class, 'show'])->whereNumber('news')->name('news.show');
+    Route::get('gallery/albums', [GalleryAlbumController::class, 'index'])->name('gallery.albums.index');
+    Route::get('gallery/albums/{album}', [GalleryAlbumController::class, 'show'])->name('gallery.albums.show');
+    Route::get('bookings/quote', [BookingQuoteController::class, 'show'])->name('bookings.quote');
+    Route::get('availability', [AvailabilityController::class, 'show'])->name('availability.show');
+    Route::get('app-config', [AppConfigController::class, 'show'])->name('app-config.show');
+
+    Route::post('webhooks/sham-cash', ShamCashWebhookController::class)->middleware('sham-cash.signature')->name('webhooks.sham-cash');
+
+    Route::prefix('auth')->name('auth.')->group(function () {
+        Route::post('otp/request', [AuthOtpController::class, 'requestCode'])->middleware('throttle:otp-request')->name('otp.request');
+        Route::post('otp/verify', [AuthOtpController::class, 'verifyCode'])->middleware('throttle:otp-verify')->name('otp.verify');
+        Route::post('logout', [AuthOtpController::class, 'logout'])->middleware(['auth:sanctum', 'user'])->name('logout');
+    });
+
+    Route::middleware(['auth:sanctum', 'user'])->group(function () {
+        Route::get('me', [ProfileController::class, 'show'])->name('me.show');
+        Route::patch('me', [ProfileController::class, 'update'])->name('me.update');
+
+        Route::apiResource('children', ChildController::class);
+        Route::get('children/{child}/eligible-groups', [EnrollmentController::class, 'eligibleGroups'])->whereNumber('child')->name('children.eligible-groups');
+
+        Route::get('children/{child}/schedule', [ChildScheduleController::class, 'schedule'])->whereNumber('child')->name('children.schedule');
+        Route::get('children/{child}/attendance', [ChildScheduleController::class, 'attendance'])->whereNumber('child')->name('children.attendance');
+
+        Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
+        Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
+        Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('subscriptions/{subscription}', [SubscriptionController::class, 'show'])->whereNumber('subscription')->name('subscriptions.show');
+        Route::post('subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->whereNumber('subscription')->name('subscriptions.renew');
+        Route::post('subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->whereNumber('subscription')->name('subscriptions.cancel');
+        Route::get('waitlist', [WaitlistController::class, 'index'])->name('waitlist.index');
+        Route::delete('waitlist/{waitlist_entry}', [WaitlistController::class, 'destroy'])->whereNumber('waitlist_entry')->name('waitlist.destroy');
+
+        Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('payments/sham-cash/initiate', [PaymentController::class, 'initiateShamCash'])->name('payments.sham-cash.initiate');
+        Route::get('payments/{payment}', [PaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
+        Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->whereNumber('payment')->name('payments.receipt');
+
+        Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
+        Route::get('bookings/{booking}', [BookingController::class, 'show'])->whereNumber('booking')->name('bookings.show');
+        Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->whereNumber('booking')->name('bookings.cancel');
+
+        Route::get('booking-series', [BookingSeriesController::class, 'index'])->name('booking-series.index');
+        Route::post('booking-series/preview', [BookingSeriesController::class, 'preview'])->name('booking-series.preview');
+        Route::post('booking-series', [BookingSeriesController::class, 'store'])->name('booking-series.store');
+        Route::get('booking-series/{booking_series}', [BookingSeriesController::class, 'show'])->whereNumber('booking_series')->name('booking-series.show');
+        Route::post('booking-series/{booking_series}/cancel', [BookingSeriesController::class, 'cancel'])->whereNumber('booking_series')->name('booking-series.cancel');
+
+        Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
+        Route::delete('devices', [DeviceController::class, 'destroy'])->name('devices.destroy');
+
+        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->whereNumber('notification')->name('notifications.read');
+    });
+
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::post('auth/login', [AdminAuthController::class, 'login'])->middleware('throttle:admin-login')->name('auth.login');
+
+        Route::middleware(['auth:sanctum', 'staff'])->group(function () {
+            Route::post('auth/logout', [AdminAuthController::class, 'logout'])->name('auth.logout');
+            Route::get('me', [AdminAuthController::class, 'me'])->name('me');
+
+            Route::middleware('permission:'.PermissionCode::RolesManage->value)->group(function () {
+                Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+                Route::apiResource('roles', RoleController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::StaffManage->value)->group(function () {
+                Route::apiResource('staff', StaffController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::FacilitiesManage->value)->group(function () {
+                Route::apiResource('facilities', FacilityController::class);
+                Route::apiResource('facilities.spaces', SpaceController::class)->shallow();
+                Route::apiResource('bookable-units', BookableUnitController::class);
+                Route::put('bookable-units/{bookable_unit}/sports', [BookableUnitController::class, 'syncSports'])->name('bookable-units.sports');
+            });
+
+            Route::middleware('permission:'.PermissionCode::SportsManage->value)->group(function () {
+                Route::apiResource('sports', SportController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::CoachesManage->value)->group(function () {
+                Route::apiResource('coaches', AdminCoachController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::AcademiesManage->value)->group(function () {
+                Route::apiResource('academies', AdminAcademyController::class);
+                Route::apiResource('academies.groups', AcademyGroupController::class)->shallow();
+                Route::apiResource('groups.schedules', GroupScheduleController::class)->shallow();
+            });
+
+            Route::middleware('permission:'.PermissionCode::SessionsManage->value)->group(function () {
+                Route::get('training-sessions', [TrainingSessionController::class, 'index'])->name('training-sessions.index');
+                Route::get('training-sessions/{training_session}', [TrainingSessionController::class, 'show'])->name('training-sessions.show');
+                Route::patch('training-sessions/{training_session}', [TrainingSessionController::class, 'update'])->name('training-sessions.update');
+                Route::post('training-sessions/{training_session}/cancel', [TrainingSessionController::class, 'cancel'])->name('training-sessions.cancel');
+            });
+
+            Route::middleware('permission:'.PermissionCode::AttendanceManage->value)->group(function () {
+                Route::get('sessions', [AttendanceController::class, 'index'])->name('sessions.index');
+                Route::get('sessions/{training_session}/attendance', [AttendanceController::class, 'show'])->whereNumber('training_session')->name('sessions.attendance.show');
+                Route::put('sessions/{training_session}/attendance', [AttendanceController::class, 'update'])->whereNumber('training_session')->name('sessions.attendance.update');
+            });
+
+            Route::middleware('permission:'.PermissionCode::ContentManage->value)->group(function () {
+                Route::apiResource('news', AdminNewsController::class);
+                Route::apiResource('gallery/albums', AdminGalleryAlbumController::class);
+                Route::post('gallery/albums/{album}/photos', [GalleryPhotoController::class, 'store'])->name('gallery.albums.photos.store');
+                Route::put('gallery/photos/{photo}', [GalleryPhotoController::class, 'update'])->name('gallery.photos.update');
+                Route::delete('gallery/photos/{photo}', [GalleryPhotoController::class, 'destroy'])->name('gallery.photos.destroy');
+            });
+
+            Route::middleware('permission:'.PermissionCode::PricingManage->value)->group(function () {
+                Route::apiResource('price-rules', PriceRuleController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::UserCategoriesManage->value)->group(function () {
+                Route::apiResource('user-categories', UserCategoryController::class);
+                Route::get('user-categories/{user_category}/members', [UserCategoryController::class, 'members'])->name('user-categories.members.index');
+                Route::post('user-categories/{user_category}/members', [UserCategoryController::class, 'addMembers'])->name('user-categories.members.store');
+                Route::delete('user-categories/{user_category}/members/{user}', [UserCategoryController::class, 'removeMember'])->name('user-categories.members.destroy');
+            });
+
+            Route::middleware('permission:'.PermissionCode::MembersView->value)->group(function () {
+                Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+                Route::get('users/{user}', [AdminUserController::class, 'show'])->whereNumber('user')->name('users.show');
+                Route::get('users/{user}/children', [AdminUserController::class, 'children'])->whereNumber('user')->name('users.children.index');
+            });
+
+            Route::middleware('permission:'.PermissionCode::MembersManage->value)->group(function () {
+                Route::put('users/{user}', [AdminUserController::class, 'update'])->whereNumber('user')->name('users.update');
+                Route::put('users/{user}/children/{child}', [AdminUserController::class, 'updateChild'])->whereNumber(['user', 'child'])->name('users.children.update');
+                Route::put('users/{user}/categories', [AdminUserController::class, 'syncCategories'])->whereNumber('user')->name('users.categories.sync');
+            });
+
+            Route::middleware('permission:'.PermissionCode::DiscountsManage->value)->group(function () {
+                Route::apiResource('discounts', DiscountController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::BookingsView->value)->group(function () {
+                Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+                Route::get('bookings/{booking}', [AdminBookingController::class, 'show'])->whereNumber('booking')->name('bookings.show');
+                Route::get('calendar', [CalendarController::class, 'show'])->name('calendar.show');
+            });
+
+            Route::middleware('permission:'.PermissionCode::BookingsManage->value)->group(function () {
+                Route::post('bookings', [AdminBookingController::class, 'store'])->name('bookings.store');
+                Route::post('bookings/{booking}/cancel', [AdminBookingController::class, 'cancel'])->whereNumber('booking')->name('bookings.cancel');
+                Route::post('bookings/{booking}/no-show', [AdminBookingController::class, 'noShow'])->whereNumber('booking')->name('bookings.no-show');
+            });
+
+            Route::middleware('permission:'.PermissionCode::EnrollmentsManage->value)->group(function () {
+                Route::get('enrollments', [AdminEnrollmentController::class, 'index'])->name('enrollments.index');
+                Route::post('enrollments', [AdminEnrollmentController::class, 'store'])->name('enrollments.store');
+                Route::get('enrollments/{enrollment}', [AdminEnrollmentController::class, 'show'])->whereNumber('enrollment')->name('enrollments.show');
+                Route::post('enrollments/{enrollment}/end', [AdminEnrollmentController::class, 'end'])->whereNumber('enrollment')->name('enrollments.end');
+                Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+                Route::post('subscriptions/{subscription}/cancel', [AdminSubscriptionController::class, 'cancel'])->whereNumber('subscription')->name('subscriptions.cancel');
+                Route::get('groups/{group}/waitlist', [AdminWaitlistController::class, 'index'])->whereNumber('group')->name('groups.waitlist.index');
+                Route::post('waitlist/{waitlist_entry}/offer', [AdminWaitlistController::class, 'offer'])->whereNumber('waitlist_entry')->name('waitlist.offer');
+                Route::post('waitlist/{waitlist_entry}/remove', [AdminWaitlistController::class, 'remove'])->whereNumber('waitlist_entry')->name('waitlist.remove');
+            });
+
+            Route::middleware('permission:'.PermissionCode::PaymentsView->value)->group(function () {
+                Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
+                Route::get('payments/{payment}', [AdminPaymentController::class, 'show'])->whereNumber('payment')->name('payments.show');
+                Route::get('payments/{payment}/receipt', [AdminPaymentController::class, 'receipt'])->whereNumber('payment')->name('payments.receipt');
+            });
+
+            Route::post('payments', [AdminPaymentController::class, 'store'])->middleware('permission:'.PermissionCode::PaymentsManage->value)->name('payments.store');
+            Route::post('payments/{payment}/refunds', [AdminPaymentController::class, 'refund'])->whereNumber('payment')->middleware('permission:'.PermissionCode::RefundsManage->value)->name('payments.refunds.store');
+
+            Route::middleware('permission:'.PermissionCode::HoursManage->value)->group(function () {
+                Route::get('facilities/{facility}/operating-hours', [OperatingHourController::class, 'index'])->name('facilities.operating-hours.index');
+                Route::put('facilities/{facility}/operating-hours', [OperatingHourController::class, 'update'])->name('facilities.operating-hours.update');
+                Route::apiResource('closures', ClosureController::class);
+            });
+
+            Route::middleware('permission:'.PermissionCode::SettingsManage->value)->group(function () {
+                Route::get('settings', [SettingController::class, 'show'])->name('settings.show');
+                Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+            });
+
+            Route::middleware('permission:'.PermissionCode::ReportsView->value)->prefix('reports')->name('reports.')->group(function () {
+                Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
+                Route::get('occupancy', [ReportController::class, 'occupancy'])->name('occupancy');
+                Route::get('subscriptions', [ReportController::class, 'subscriptions'])->name('subscriptions');
+                Route::get('discounts', [ReportController::class, 'discounts'])->name('discounts');
+            });
+
+            Route::middleware('permission:'.PermissionCode::AnnouncementsSend->value)->group(function () {
+                Route::apiResource('announcements', AnnouncementController::class)->only(['index', 'store', 'show']);
+            });
+
+            Route::middleware('permission:'.PermissionCode::AuditLogsView->value)->group(function () {
+                Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+                Route::get('audit-logs/{audit_log}', [AuditLogController::class, 'show'])->whereNumber('audit_log')->name('audit-logs.show');
+            });
+        });
+    });
+});

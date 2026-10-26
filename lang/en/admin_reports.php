@@ -1,0 +1,82 @@
+<?php
+
+return [
+
+    'attributes' => [
+        'date_from' => 'start date',
+        'date_to' => 'end date',
+        'format' => 'format',
+        'group_by' => 'grouping',
+        'facility_id' => 'facility',
+        'sport_id' => 'sport',
+    ],
+
+    'validation' => [
+        'date_required' => 'The date range is required.',
+        'date_invalid' => 'The date must use the YYYY-MM-DD format.',
+        'date_to_after_from' => 'The end date cannot be before the start date.',
+        'range_too_long' => 'The date range cannot exceed :days days.',
+        'format_invalid' => 'The format must be json or xlsx.',
+        'group_by_invalid' => 'The grouping must be day or month.',
+        'facility_id_invalid' => 'The facility filter must be a whole number of at least 1.',
+        'sport_id_invalid' => 'The sport filter must be a whole number of at least 1.',
+    ],
+
+    'values' => [
+        'cash' => 'Cash',
+        'sham_cash' => 'Sham Cash',
+        'booking' => 'Booking',
+        'subscription' => 'Subscription',
+        'pending_payment' => 'Pending payment',
+        'active' => 'Active',
+        'expired' => 'Expired',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'columns' => [
+        'period' => 'Period',
+        'method' => 'Method',
+        'target' => 'Target',
+        'payments_count' => 'Payments',
+        'gross' => 'Revenue',
+        'refunded' => 'Refunded',
+        'net' => 'Net',
+        'facility_name_ar' => 'Facility (Arabic)',
+        'facility_name_en' => 'Facility (English)',
+        'unit_code' => 'Unit code',
+        'name_ar' => 'Name (Arabic)',
+        'name_en' => 'Name (English)',
+        'booked_hours' => 'Booked hours',
+        'available_hours' => 'Available hours',
+        'occupancy_percent' => 'Occupancy %',
+        'academy_name_ar' => 'Academy (Arabic)',
+        'academy_name_en' => 'Academy (English)',
+        'group_name_ar' => 'Group (Arabic)',
+        'group_name_en' => 'Group (English)',
+        'status' => 'Status',
+        'count' => 'Count',
+        'new_in_range' => 'New in range',
+        'expired_in_range' => 'Expired in range',
+        'active_now' => 'Active now',
+        'metric' => 'Metric',
+        'value' => 'Value',
+        'usage_count' => 'Usage count',
+        'bookings_count' => 'Bookings',
+        'subscriptions_count' => 'Subscriptions',
+        'total_discount' => 'Total discount',
+    ],
+
+    'sheets' => [
+        'summary' => 'Summary',
+        'by_period' => 'By period',
+        'by_method' => 'By method',
+        'by_target' => 'By target',
+        'units' => 'Units',
+        'facilities' => 'Facilities',
+        'by_status' => 'By status',
+        'groups' => 'Groups',
+        'discounts' => 'Discounts',
+        'categories' => 'User categories',
+    ],
+
+];
