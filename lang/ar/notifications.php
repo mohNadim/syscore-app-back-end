@@ -12,7 +12,7 @@ return [
         ],
         'payment_succeeded' => [
             'title' => 'تمت عملية الدفع',
-            'body' => 'تم استلام دفعتك بمبلغ :amount بنجاح.',
+            'body' => 'تم استلام دفعتك بمبلغ :amount ل.س بنجاح.',
         ],
         'booking_reminder' => [
             'title' => 'تذكير بحجزك',
@@ -32,11 +32,11 @@ return [
         ],
         'session_cancelled' => [
             'title' => 'إلغاء حصة',
-            'body' => 'تم إلغاء حصة مجموعة :group المقررة في :time.',
+            'body' => 'تم إلغاء حصة :child في مجموعة :group المقررة في :time.',
         ],
         'session_updated' => [
             'title' => 'تعديل حصة',
-            'body' => 'تم تعديل حصة مجموعة :group، الموعد الجديد :time في :unit.',
+            'body' => 'تم تعديل حصة :child في مجموعة :group، الموعد الجديد :time في :unit.',
         ],
         'discount_created' => [
             'title' => 'خصم جديد',

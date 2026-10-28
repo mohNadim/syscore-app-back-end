@@ -104,7 +104,9 @@ class NotificationEventsTest extends TestCase
 
         $this->assertSame('confirmed', $booking->refresh()->status);
         $this->assertNotificationFor($booking->user, 'booking_confirmed', ['booking_id' => $booking->id]);
-        $this->assertNotificationFor($booking->user, 'payment_succeeded', ['payment_id' => $payment->id, 'booking_id' => $booking->id]);
+        $paymentNotification = $this->assertNotificationFor($booking->user, 'payment_succeeded', ['payment_id' => $payment->id, 'booking_id' => $booking->id]);
+        $this->assertStringContainsString('10,000 ل.س', $paymentNotification->body_ar);
+        $this->assertStringContainsString('10,000 SYP', $paymentNotification->body_en);
         Queue::assertPushed(SendPushNotification::class, 2);
     }
 
@@ -270,7 +272,7 @@ class NotificationEventsTest extends TestCase
         $this->assertSame(1, Notification::query()->where('type', 'subscription_expiring')->count());
     }
 
-    public function test_cancelling_a_session_notifies_each_guardian_once(): void
+    public function test_cancelling_a_session_notifies_the_guardian_once_per_enrolled_child(): void
     {
         Queue::fake();
         $this->actingAsStaffWith(['sessions.manage']);
@@ -284,10 +286,19 @@ class NotificationEventsTest extends TestCase
 
         $this->postJson("/api/v1/admin/training-sessions/{$session->id}/cancel", ['reason' => 'طقس سيئ'])->assertOk();
 
-        $this->assertNotificationFor($child->user, 'session_cancelled', ['session_id' => $session->id, 'group_id' => $group->id]);
+        $notifications = Notification::query()->where('user_id', $child->user_id)->where('type', 'session_cancelled')->get();
+        $this->assertCount(2, $notifications);
+        $this->assertEqualsCanonicalizing([$child->id, $sibling->id], $notifications->pluck('data.child_id')->all());
+
+        foreach ($notifications as $notification) {
+            $this->assertSame($session->id, $notification->data['session_id']);
+            $this->assertSame($group->id, $notification->data['group_id']);
+        }
+
+        $this->assertStringContainsString($sibling->full_name, $notifications->firstWhere('data.child_id', $sibling->id)->body_ar);
         $this->assertSame(0, Notification::query()->where('user_id', $ended->user_id)->count());
         $this->assertSame(0, Notification::query()->where('user_id', $otherGroupChild->user_id)->count());
-        Queue::assertPushed(SendPushNotification::class, 1);
+        Queue::assertPushed(SendPushNotification::class, 2);
     }
 
     public function test_updating_a_session_notifies_only_when_time_or_room_changed(): void
@@ -313,7 +324,7 @@ class NotificationEventsTest extends TestCase
 
         $this->patchJson($url, ['starts_at' => '2026-10-29 18:00', 'ends_at' => '2026-10-29 19:00', 'change_reason' => 'مباراة'])->assertOk();
 
-        $this->assertNotificationFor($child->user, 'session_updated', ['session_id' => $session->id]);
+        $this->assertNotificationFor($child->user, 'session_updated', ['session_id' => $session->id, 'child_id' => $child->id]);
         Queue::assertPushed(SendPushNotification::class, 1);
     }
 
