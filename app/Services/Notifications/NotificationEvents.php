@@ -5,6 +5,7 @@ namespace App\Services\Notifications;
 use App\Jobs\SendDiscountNotification;
 use App\Models\Attendance;
 use App\Models\Booking;
+use App\Models\Child;
 use App\Models\Discount;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -63,7 +64,7 @@ class NotificationEvents
             }
 
             $this->send($user, 'payment_succeeded', 'payment_succeeded', [
-                'amount' => $this->pair((string) $payment->amount, (string) $payment->amount),
+                'amount' => $this->pair(number_format($payment->amount), number_format($payment->amount)),
             ], array_filter([
                 'payment_id' => $payment->id,
                 'booking_id' => $payment->booking_id,
@@ -130,7 +131,7 @@ class NotificationEvents
     }
 
     /**
-     * A session was cancelled; the guardians of its group are told after the surrounding transaction commits.
+     * A session was cancelled; the guardian of each actively enrolled child is told once per child after the surrounding transaction commits.
      */
     public function sessionCancelled(TrainingSession $session): void
     {
@@ -138,7 +139,7 @@ class NotificationEvents
     }
 
     /**
-     * A session's time or room changed; the guardians of its group are told after the surrounding transaction commits.
+     * A session's time or room changed; the guardian of each actively enrolled child is told once per child after the surrounding transaction commits.
      */
     public function sessionUpdated(TrainingSession $session): void
     {
@@ -185,14 +186,19 @@ class NotificationEvents
                 'unit' => $this->pair($unit?->name_ar, $unit?->name_en),
             ];
 
-            User::query()
-                ->where('is_active', true)
-                ->whereHas('children.enrollments', fn (Builder $enrollments) => $enrollments
+            Child::query()
+                ->with('user')
+                ->whereHas('user', fn (Builder $users) => $users->where('is_active', true))
+                ->whereHas('enrollments', fn (Builder $enrollments) => $enrollments
                     ->where('group_id', $session->group_id)
                     ->where('status', 'active'))
-                ->each(fn (User $user) => $this->attempt(fn () => $this->send($user, $type, $type, $replace, [
+                ->each(fn (Child $child) => $this->attempt(fn () => $this->send($child->user, $type, $type, [
+                    'child' => $this->pair($child->full_name, $child->full_name),
+                    ...$replace,
+                ], [
                     'session_id' => $session->id,
                     'group_id' => $session->group_id,
+                    'child_id' => $child->id,
                 ])));
         });
     }

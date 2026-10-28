@@ -12,7 +12,7 @@ return [
         ],
         'payment_succeeded' => [
             'title' => 'Payment received',
-            'body' => 'Your payment of :amount was received successfully.',
+            'body' => 'Your payment of :amount SYP was received successfully.',
         ],
         'booking_reminder' => [
             'title' => 'Booking reminder',
@@ -32,11 +32,11 @@ return [
         ],
         'session_cancelled' => [
             'title' => 'Session cancelled',
-            'body' => 'The session of group :group scheduled on :time was cancelled.',
+            'body' => 'The session of :child in group :group scheduled on :time was cancelled.',
         ],
         'session_updated' => [
             'title' => 'Session changed',
-            'body' => 'The session of group :group was changed. New time: :time at :unit.',
+            'body' => 'The session of :child in group :group was changed. New time: :time at :unit.',
         ],
         'discount_created' => [
             'title' => 'New discount',
