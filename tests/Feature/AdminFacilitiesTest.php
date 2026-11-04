@@ -116,8 +116,11 @@ class AdminFacilitiesTest extends TestCase
             'type' => 'pitch',
             'name_ar' => 'الملعب الرئيسي',
             'sort_order' => 3,
+            'images' => ['https://example.com/p.jpg'],
         ])
             ->assertCreated()
+            ->assertJsonPath('data.images', ['https://example.com/p.jpg'])
+            ->assertJsonPath('data.cover_image', 'https://example.com/p.jpg')
             ->assertJsonPath('message', __('admin_facilities.facility_created', [], 'ar'))
             ->assertJsonPath('data.type', 'pitch')
             ->assertJsonPath('data.name_en', null)

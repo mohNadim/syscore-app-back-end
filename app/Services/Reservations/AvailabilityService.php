@@ -27,7 +27,7 @@ class AvailabilityService
      * Compute the slot grid of every active unit of the facility for one local day.
      *
      * Everything (units, hours, closures, reservations, price rules) is loaded once; slot statuses are then
-     * computed in memory with the priority past, closed, booked, unpriced, available.
+     * computed in memory with the priority past, closed, booked or academy_session, unpriced, available.
      *
      * @return array{facility_id: int, date: string, is_open: bool, open_time: string|null, close_time: string|null, slot_minutes: int, duration_minutes: int, units: list<array<string, mixed>>}
      */
@@ -45,6 +45,8 @@ class AvailabilityService
             ->orderBy('id')
             ->get();
 
+        $facilitySpaceCount = $facility->spaces()->count();
+
         $hours = OperatingHour::query()
             ->where('facility_id', $facility->id)
             ->where('weekday', $localDate->dayOfWeek)
@@ -61,7 +63,7 @@ class AvailabilityService
         ];
 
         if ($hours === null || $units->isEmpty()) {
-            return $result + ['units' => $units->map(fn (BookableUnit $unit): array => $this->unitHeader($unit) + ['slots' => []])->all()];
+            return $result + ['units' => $units->map(fn (BookableUnit $unit): array => $this->unitHeader($unit, $facilitySpaceCount) + ['slots' => []])->all()];
         }
 
         $dayStart = $this->timezone->dayStartUtc($date);
@@ -92,7 +94,7 @@ class AvailabilityService
         $grid = $this->slotGrid($date, $result['open_time'], $result['close_time'], $slotMinutes, $durationMinutes);
         $now = CarbonImmutable::now();
 
-        $result['units'] = $units->map(function (BookableUnit $unit) use ($grid, $closures, $reservations, $rules, $now): array {
+        $result['units'] = $units->map(function (BookableUnit $unit) use ($facilitySpaceCount, $grid, $closures, $reservations, $rules, $now): array {
             $unitSpaceIds = $unit->spaces->modelKeys();
             $unitRules = $rules->get($unit->id, new Collection);
 
@@ -104,8 +106,8 @@ class AvailabilityService
                     $status = 'past';
                 } elseif ($this->overlapsClosure($closures, $unit->facility_id, $unitSpaceIds, $startsAt, $endsAt)) {
                     $status = 'closed';
-                } elseif ($this->overlapsReservation($reservations, $unitSpaceIds, $startsAt, $endsAt)) {
-                    $status = 'booked';
+                } elseif (($occupant = $this->reservationOccupant($reservations, $unitSpaceIds, $startsAt, $endsAt)) !== null) {
+                    $status = $occupant;
                 } elseif (($price = $this->pricing->priceFromRules($unitRules, $startsAt, $endsAt)) === null) {
                     $status = 'unpriced';
                 } else {
@@ -120,7 +122,7 @@ class AvailabilityService
                 ];
             }, $grid);
 
-            return $this->unitHeader($unit) + ['slots' => $slots];
+            return $this->unitHeader($unit, $facilitySpaceCount) + ['slots' => $slots];
         })->all();
 
         return $result;
@@ -157,26 +159,42 @@ class AvailabilityService
     }
 
     /**
+     * The slot status caused by overlapping reservations: booked when any real booking overlaps,
+     * academy_session when only training sessions do, null when nothing does.
+     *
      * @param  Collection<int, SpaceReservation>  $reservations
      * @param  list<int>  $spaceIds
      */
-    protected function overlapsReservation(Collection $reservations, array $spaceIds, CarbonInterface $startsAt, CarbonInterface $endsAt): bool
+    protected function reservationOccupant(Collection $reservations, array $spaceIds, CarbonInterface $startsAt, CarbonInterface $endsAt): ?string
     {
-        return $reservations->contains(fn (SpaceReservation $reservation): bool => in_array($reservation->space_id, $spaceIds, true)
+        $overlapping = $reservations->filter(fn (SpaceReservation $reservation): bool => in_array($reservation->space_id, $spaceIds, true)
             && $reservation->starts_at->lt($endsAt)
             && $reservation->ends_at->gt($startsAt));
+
+        if ($overlapping->isEmpty()) {
+            return null;
+        }
+
+        return $overlapping->contains(fn (SpaceReservation $reservation): bool => $reservation->session_id === null) ? 'booked' : 'academy_session';
     }
 
     /**
      * @return array<string, mixed>
      */
-    protected function unitHeader(BookableUnit $unit): array
+    protected function unitHeader(BookableUnit $unit, int $facilitySpaceCount): array
     {
         return [
             'id' => $unit->id,
             'code' => $unit->code,
             'name_ar' => $unit->name_ar,
             'name_en' => $unit->name_en,
+            'is_full_unit' => $unit->spaces->count() === $facilitySpaceCount,
+            'spaces' => $unit->spaces->map(fn ($space): array => [
+                'id' => $space->id,
+                'name_ar' => $space->name_ar,
+                'name_en' => $space->name_en,
+                'code' => $space->code,
+            ])->all(),
             'sports' => $unit->sports->map(fn ($sport): array => [
                 'id' => $sport->id,
                 'name_ar' => $sport->name_ar,

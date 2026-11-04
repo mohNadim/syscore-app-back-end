@@ -133,6 +133,43 @@ class AvailabilityTest extends TestCase
         $this->assertSame('available', $this->statuses($data, $this->fullUnit->id)['10:00']);
     }
 
+    public function test_units_list_their_spaces_and_whether_they_cover_the_whole_facility(): void
+    {
+        $data = $this->fetch()->assertOk()->json('data');
+        $full = collect($data['units'])->firstWhere('id', $this->fullUnit->id);
+        $half = collect($data['units'])->firstWhere('id', $this->halfUnitA->id);
+
+        $this->assertTrue($full['is_full_unit']);
+        $this->assertFalse($half['is_full_unit']);
+        $this->assertEqualsCanonicalizing([$this->spaceA->id, $this->spaceB->id], array_column($full['spaces'], 'id'));
+        $this->assertSame([$this->spaceA->id], array_column($half['spaces'], 'id'));
+        $this->assertSame(['id', 'name_ar', 'name_en', 'code'], array_keys($half['spaces'][0]));
+    }
+
+    public function test_a_training_session_reservation_is_an_academy_session_slot(): void
+    {
+        $startsAt = app(DisplayTimezone::class)->localToUtc('2026-10-27 16:00');
+        $session = TrainingSession::factory()->create([
+            'unit_id' => $this->halfUnitB->id,
+            'starts_at' => $startsAt,
+            'ends_at' => $startsAt->addMinutes(60),
+        ]);
+        SpaceReservation::factory()->forSession()->create([
+            'space_id' => $this->spaceB->id,
+            'session_id' => $session->id,
+            'starts_at' => $startsAt,
+            'ends_at' => $startsAt->addMinutes(60),
+        ]);
+        $this->reserve([$this->spaceA], '2026-10-27 17:00');
+
+        $data = $this->fetch()->json('data');
+
+        $this->assertSame('academy_session', $this->statuses($data, $this->halfUnitB->id)['16:00']);
+        $this->assertSame('academy_session', $this->statuses($data, $this->fullUnit->id)['16:00']);
+        $this->assertSame('available', $this->statuses($data, $this->halfUnitA->id)['16:00']);
+        $this->assertSame('booked', $this->statuses($data, $this->halfUnitA->id)['17:00']);
+    }
+
     public function test_a_training_session_reservation_blocks_the_slot(): void
     {
         $startsAt = app(DisplayTimezone::class)->localToUtc('2026-10-27 16:00');
@@ -150,8 +187,8 @@ class AvailabilityTest extends TestCase
 
         $data = $this->fetch()->json('data');
 
-        $this->assertSame('booked', $this->statuses($data, $this->fullUnit->id)['16:00']);
-        $this->assertSame('booked', $this->statuses($data, $this->fullUnit->id)['17:00']);
+        $this->assertSame('academy_session', $this->statuses($data, $this->fullUnit->id)['16:00']);
+        $this->assertSame('academy_session', $this->statuses($data, $this->fullUnit->id)['17:00']);
         $this->assertSame('available', $this->statuses($data, $this->halfUnitA->id)['16:00']);
         $this->assertSame('available', $this->statuses($data, $this->fullUnit->id)['18:00']);
     }

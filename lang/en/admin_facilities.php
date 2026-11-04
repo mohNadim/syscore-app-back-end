@@ -23,6 +23,7 @@ return [
         'name_en_invalid' => 'The English name must be text of at most 100 characters.',
         'description_ar_invalid' => 'The Arabic description must be text of at most 5000 characters.',
         'description_en_invalid' => 'The English description must be text of at most 5000 characters.',
+        'images_invalid' => 'The images must be a list of at most 10 valid image URLs of at most 500 characters each.',
         'sort_order_invalid' => 'The sort order must be a whole number between 0 and 65535.',
         'is_active_invalid' => 'The active flag must be true or false.',
         'space_code_invalid' => 'The space code is required and must be at most 20 characters of capital letters, digits or underscores.',
