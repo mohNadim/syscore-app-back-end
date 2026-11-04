@@ -68,7 +68,7 @@ class BookingResource extends JsonResource
                 'id' => $this->createdByStaff->id,
                 'full_name' => $this->createdByStaff->full_name,
             ]),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

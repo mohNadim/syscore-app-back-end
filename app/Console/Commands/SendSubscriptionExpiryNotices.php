@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('subscriptions:send-expiry-notices')]
-#[Description('Notify guardians before a subscription ends (academy.subscription_expiry_notice_days) and when it has ended')]
+#[Description('Notify guardians before a subscription ends (subscription.expiry_reminder_days) and when it has ended')]
 class SendSubscriptionExpiryNotices extends Command
 {
     /**
@@ -18,7 +18,7 @@ class SendSubscriptionExpiryNotices extends Command
      */
     public function handle(NotificationEvents $events, SettingStore $settings): int
     {
-        $noticeEnd = now()->addDays((int) $settings->get('academy.subscription_expiry_notice_days'));
+        $noticeEnd = now()->addDays((int) $settings->get('subscription.expiry_reminder_days'));
         $expiring = 0;
         $expired = 0;
 

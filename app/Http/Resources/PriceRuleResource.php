@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\PriceRule;
+use App\Services\DisplayTimezone;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,7 +30,7 @@ class PriceRuleResource extends JsonResource
             'price_per_hour' => $this->price_per_hour,
             'valid_from' => $this->valid_from?->format('Y-m-d'),
             'valid_to' => $this->valid_to?->format('Y-m-d'),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

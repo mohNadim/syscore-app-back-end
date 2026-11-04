@@ -39,7 +39,7 @@ class EnrollmentController extends Controller
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')->toString()))
             ->with(self::WITH)
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return EnrollmentResource::collection($enrollments);
     }

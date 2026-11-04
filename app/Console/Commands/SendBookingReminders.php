@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('bookings:send-reminders')]
-#[Description('Remind users of confirmed bookings starting within the configured reminder window (academy.booking_reminder_hours)')]
+#[Description('Remind users of confirmed bookings starting within the configured reminder window (booking.reminder_minutes_before)')]
 class SendBookingReminders extends Command
 {
     /**
@@ -18,7 +18,7 @@ class SendBookingReminders extends Command
      */
     public function handle(NotificationEvents $events, SettingStore $settings): int
     {
-        $windowEnd = now()->addHours((int) $settings->get('academy.booking_reminder_hours'));
+        $windowEnd = now()->addMinutes((int) $settings->get('booking.reminder_minutes_before'));
         $sent = 0;
 
         Booking::query()

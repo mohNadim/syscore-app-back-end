@@ -29,7 +29,7 @@ class ClosureController extends Controller
             ->when($request->boolean('upcoming'), fn ($query) => $query->where('ends_at', '>=', now()))
             ->orderByDesc('starts_at')
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return ClosureResource::collection($closures);
     }

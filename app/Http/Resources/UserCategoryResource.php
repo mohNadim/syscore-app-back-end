@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\UserCategory;
+use App\Services\DisplayTimezone;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,7 +26,7 @@ class UserCategoryResource extends JsonResource
             'description' => $this->description,
             'is_active' => $this->is_active,
             'users_count' => $this->whenCounted('users'),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

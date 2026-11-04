@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\GalleryAlbum;
+use App\Services\DisplayTimezone;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,7 +28,7 @@ class GalleryAlbumResource extends JsonResource
             'photos_count' => $this->whenCounted('photos'),
             'cover_url' => $this->coverUrl(),
             'photos' => GalleryPhotoResource::collection($this->whenLoaded('photos')),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 

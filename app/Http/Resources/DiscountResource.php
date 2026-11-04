@@ -39,7 +39,7 @@ class DiscountResource extends JsonResource
             'sports' => $this->whenLoaded('sports', fn () => $this->sports->map(fn ($sport) => $this->brief($sport))->all()),
             'academies' => $this->whenLoaded('academies', fn () => $this->academies->map(fn ($academy) => $this->brief($academy))->all()),
             'created_by_staff_id' => $this->created_by_staff_id,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 

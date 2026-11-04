@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Child;
+use App\Services\DisplayTimezone;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,8 +27,8 @@ class ChildResource extends JsonResource
             'age' => $this->birth_date->age,
             'gender' => $this->gender,
             'health_notes' => $this->health_notes,
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
+            'updated_at' => $this->updated_at ? app(DisplayTimezone::class)->utcToLocalIso($this->updated_at) : null,
         ];
     }
 }

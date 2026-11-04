@@ -25,7 +25,7 @@ class GalleryAlbumController extends Controller
             ->with('coverPhoto')
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return GalleryAlbumResource::collection($albums);
     }

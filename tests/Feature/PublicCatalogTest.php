@@ -186,6 +186,8 @@ class PublicCatalogTest extends TestCase
             ->assertJsonPath('data.display_timezone', 'Asia/Damascus')
             ->assertJsonPath('data.otp.resend_cooldown_seconds', 60)
             ->assertJsonPath('data.subscription.expiry_reminder_days', 7)
+            ->assertJsonPath('data.academy.waitlist_offer_hours', 24)
+            ->assertJsonPath('data.academy.subscription_payment_hours', 48)
             ->assertJsonStructure(['data' => ['contact' => ['phone', 'whatsapp', 'address_ar', 'address_en'], 'server_time']])
             ->assertJsonMissingPath('data.otp.channel')
             ->assertJsonMissingPath('data.otp.ttl_minutes')

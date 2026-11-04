@@ -25,7 +25,7 @@ class AnnouncementController extends Controller
             ->when($request->filled('academy_id'), fn ($query) => $query->where('academy_id', $request->integer('academy_id')))
             ->when($request->filled('user_category_id'), fn ($query) => $query->where('user_category_id', $request->integer('user_category_id')))
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return AdminAnnouncementResource::collection($announcements);
     }

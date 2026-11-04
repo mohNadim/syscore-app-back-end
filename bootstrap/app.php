@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\BusinessRuleException;
 use App\Exceptions\ScheduleConflictException;
 use App\Exceptions\SeriesUnavailableException;
 use App\Http\Middleware\EnsurePermission;
@@ -71,6 +72,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof ValidationException => response()->json([
                     'message' => __('api.validation_failed'),
                     'errors' => $e->errors(),
+                ], 422),
+                $e instanceof BusinessRuleException => response()->json([
+                    'message' => $e->getMessage(),
+                    'code' => $e->errorCode,
                 ], 422),
                 $e instanceof ScheduleConflictException => response()->json([
                     'message' => $e->getMessage(),

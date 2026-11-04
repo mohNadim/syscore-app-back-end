@@ -35,7 +35,7 @@ class TrainingSessionResource extends JsonResource
             'original_starts_at' => $this->original_starts_at ? $timezone->utcToLocalIso($this->original_starts_at) : null,
             'status' => $this->status,
             'change_reason' => $this->change_reason,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

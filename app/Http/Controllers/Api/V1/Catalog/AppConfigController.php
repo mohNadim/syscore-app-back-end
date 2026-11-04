@@ -30,6 +30,10 @@ class AppConfigController extends Controller
             'subscription' => [
                 'expiry_reminder_days' => $settings->get('subscription.expiry_reminder_days'),
             ],
+            'academy' => [
+                'waitlist_offer_hours' => $settings->get('academy.waitlist_offer_hours'),
+                'subscription_payment_hours' => $settings->get('academy.enrollment_payment_hours'),
+            ],
             'server_time' => $timezone->utcToLocalIso(now()),
         ]]);
     }

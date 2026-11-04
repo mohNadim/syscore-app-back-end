@@ -26,8 +26,8 @@ class UserResource extends JsonResource
             'full_name' => $this->full_name,
             'preferred_lang' => $this->preferred_lang,
             'is_active' => $this->is_active,
-            'last_login_at' => $this->last_login_at?->toIso8601String(),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'last_login_at' => $this->last_login_at ? app(DisplayTimezone::class)->utcToLocalIso($this->last_login_at) : null,
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
             'assigned_at' => $this->whenPivotLoadedAs('pivot', 'user_category_members', fn () => $this->pivot->assigned_at
                 ? app(DisplayTimezone::class)->utcToLocalIso(Carbon::parse($this->pivot->assigned_at, 'UTC'))
                 : null),

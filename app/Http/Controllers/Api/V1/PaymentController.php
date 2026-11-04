@@ -32,7 +32,7 @@ class PaymentController extends Controller
         $payments = $request->user()->payments()
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return PaymentResource::collection($payments);
     }

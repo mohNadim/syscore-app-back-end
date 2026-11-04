@@ -23,7 +23,7 @@ class NotificationController extends Controller
             ->when($request->boolean('unread'), fn ($query) => $query->whereNull('read_at'))
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return NotificationResource::collection($notifications)
             ->additional(['meta' => ['unread_count' => $user->notifications()->whereNull('read_at')->count()]]);

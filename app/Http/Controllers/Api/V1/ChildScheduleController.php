@@ -65,7 +65,7 @@ class ChildScheduleController extends Controller
             ->with('session.group.academy')
             ->orderByDesc('training_sessions.starts_at')
             ->orderByDesc('attendance.id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         $counts = Attendance::query()
             ->where('child_id', $child->id)

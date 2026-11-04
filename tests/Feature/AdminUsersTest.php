@@ -48,6 +48,17 @@ class AdminUsersTest extends TestCase
         return $staff;
     }
 
+    public function test_admin_user_timestamps_use_the_display_timezone_offset(): void
+    {
+        $this->actingAsMemberManager();
+        $user = User::factory()->create(['last_login_at' => now()]);
+
+        $data = $this->getJson("/api/v1/admin/users/{$user->id}")->assertOk()->json('data');
+
+        $this->assertStringEndsWith('+03:00', $data['created_at']);
+        $this->assertStringEndsWith('+03:00', $data['last_login_at']);
+    }
+
     public function test_access_control_for_every_endpoint(): void
     {
         $user = User::factory()->create();

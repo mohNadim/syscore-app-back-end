@@ -29,7 +29,7 @@ class BookingSeriesController extends Controller
             ->with(['unit.facility', 'sport'])
             ->withCount('bookings')
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return BookingSeriesResource::collection($series);
     }

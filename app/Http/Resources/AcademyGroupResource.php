@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\AcademyGroup;
+use App\Services\DisplayTimezone;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -37,7 +38,7 @@ class AcademyGroupResource extends JsonResource
             'subscription_days' => $this->subscription_days,
             'is_active' => $this->is_active,
             'schedules' => GroupScheduleResource::collection($this->whenLoaded('schedules')),
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

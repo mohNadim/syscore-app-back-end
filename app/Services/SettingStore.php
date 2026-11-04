@@ -26,8 +26,6 @@ class SettingStore
         'academy.session_generation_days' => 28,
         'academy.enrollment_payment_hours' => 48,
         'academy.waitlist_offer_hours' => 24,
-        'academy.booking_reminder_hours' => 2,
-        'academy.subscription_expiry_notice_days' => 7,
         'app.display_timezone' => 'Asia/Damascus',
         'app.contact' => [
             'phone' => null,

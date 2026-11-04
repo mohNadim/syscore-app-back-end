@@ -265,6 +265,24 @@ class BookingsTest extends TestCase
             ->assertJsonPath('errors.payment_mode.0', __('bookings.validation.payment_mode_invalid', [], 'en'));
     }
 
+    public function test_pagination_links_keep_the_query_string(): void
+    {
+        Booking::factory()->count(3)->for($this->user)->create();
+
+        $response = $this->getJson(self::URL.'?per_page=2&status=confirmed')->assertOk()->assertJsonCount(2, 'data');
+
+        $this->assertStringContainsString('per_page=2', $response->json('links.next'));
+        $this->assertStringContainsString('status=confirmed', $response->json('links.next'));
+    }
+
+    public function test_booking_timestamps_use_the_display_timezone_offset(): void
+    {
+        $booking = Booking::factory()->for($this->user)->create();
+
+        $this->getJson(self::URL."/{$booking->id}")->assertOk();
+        $this->assertStringEndsWith('+03:00', $this->getJson(self::URL."/{$booking->id}")->json('data.created_at'));
+    }
+
     public function test_user_lists_only_own_bookings_with_scope_and_status_filters(): void
     {
         $upcoming = Booking::factory()->for($this->user)->create(['starts_at' => now()->addDays(2), 'ends_at' => now()->addDays(2)->addHour()]);
@@ -318,7 +336,8 @@ class BookingsTest extends TestCase
         $late = Booking::factory()->for($this->user)->create(['starts_at' => now()->addHours(23), 'ends_at' => now()->addHours(24)]);
 
         $this->postJson(self::URL."/{$late->id}/cancel")->assertUnprocessable()
-            ->assertJsonPath('message', __('bookings.cancellation_deadline_passed', [], 'ar'));
+            ->assertJsonPath('message', __('bookings.cancellation_deadline_passed', [], 'ar'))
+            ->assertJsonPath('code', 'cancellation_deadline_passed');
         $this->assertSame('confirmed', $late->fresh()->status);
 
         $this->postJson(self::URL."/{$early->id}/cancel")->assertOk();
@@ -330,7 +349,8 @@ class BookingsTest extends TestCase
         $cancelled = Booking::factory()->cancelled()->for($this->user)->create();
 
         $this->postJson(self::URL."/{$started->id}/cancel")->assertUnprocessable()
-            ->assertJsonPath('message', __('bookings.not_cancellable', [], 'ar'));
+            ->assertJsonPath('message', __('bookings.not_cancellable', [], 'ar'))
+            ->assertJsonPath('code', 'not_cancellable');
         $this->postJson(self::URL."/{$cancelled->id}/cancel")->assertUnprocessable();
         $this->postJson(self::URL."/{$started->id}/cancel", ['reason' => str_repeat('a', 256)])->assertUnprocessable()->assertJsonValidationErrors('reason');
     }
