@@ -173,6 +173,7 @@ class BookingService
             }
 
             $this->audit->log('booking.cancelled', $locked, $before, ['status' => 'cancelled', 'cancel_reason' => $reason]);
+            $this->events->bookingCancelled($locked);
 
             return $locked;
         });
@@ -195,6 +196,28 @@ class BookingService
             $locked->update(['status' => 'expired']);
             $this->reservations->releaseForBooking($locked);
             $this->audit->log('booking.expired', $locked, ['status' => 'pending_deposit'], ['status' => 'expired']);
+            $this->events->bookingExpired($locked);
+
+            return true;
+        });
+    }
+
+    /**
+     * Complete a confirmed booking whose end has passed.
+     *
+     * Returns false when it is no longer confirmed or has not ended by the time its row is locked.
+     */
+    public function completePast(Booking $booking): bool
+    {
+        return DB::transaction(function () use ($booking): bool {
+            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+
+            if ($locked->status !== 'confirmed' || $locked->ends_at->gt(now())) {
+                return false;
+            }
+
+            $locked->update(['status' => 'completed']);
+            $this->audit->log('booking.completed', $locked, ['status' => 'confirmed'], ['status' => 'completed']);
 
             return true;
         });

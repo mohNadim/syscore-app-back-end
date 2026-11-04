@@ -30,6 +30,30 @@ return [
             'title' => 'Subscription expired',
             'body' => 'The subscription of :child in group :group has expired. Renew to continue.',
         ],
+        'booking_cancelled' => [
+            'title' => 'Booking cancelled',
+            'body' => 'Your booking :booking_number at :unit on :time was cancelled.',
+        ],
+        'booking_expired' => [
+            'title' => 'Booking expired',
+            'body' => 'Your booking :booking_number at :unit on :time expired because the deposit was not paid in time.',
+        ],
+        'waitlist_offered' => [
+            'title' => 'A seat is available',
+            'body' => 'A seat opened for :child in group :group. Enroll before :date or the offer expires.',
+        ],
+        'waitlist_offer_expired' => [
+            'title' => 'Seat offer expired',
+            'body' => 'The seat offer for :child in group :group has expired.',
+        ],
+        'enrollment_ended' => [
+            'title' => 'Enrollment ended',
+            'body' => 'The enrollment of :child in group :group has ended.',
+        ],
+        'subscription_unpaid_expired' => [
+            'title' => 'Subscription cancelled',
+            'body' => 'The unpaid subscription of :child in group :group was cancelled because payment was not received.',
+        ],
         'session_cancelled' => [
             'title' => 'Session cancelled',
             'body' => 'The session of :child in group :group scheduled on :time was cancelled.',

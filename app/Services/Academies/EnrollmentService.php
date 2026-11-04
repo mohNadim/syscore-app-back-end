@@ -9,6 +9,7 @@ use App\Models\Staff;
 use App\Models\WaitlistEntry;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use App\Services\Pricing\PricingService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -24,6 +25,7 @@ class EnrollmentService
         protected PricingService $pricing,
         protected DisplayTimezone $timezone,
         protected AuditLogger $audit,
+        protected NotificationEvents $events,
     ) {}
 
     /**
@@ -160,6 +162,7 @@ class EnrollmentService
 
             $locked->update(['status' => 'ended', 'ended_at' => now()]);
             $this->audit->log('enrollment.ended', $locked, ['status' => 'active'], ['status' => 'ended', 'reason' => $reason]);
+            $this->events->enrollmentEnded($locked);
 
             return $locked->refresh();
         });
@@ -167,8 +170,6 @@ class EnrollmentService
 
     /**
      * Offer a free seat to a waiting child; the seat is held until the child enrolls or the offer is withdrawn.
-     *
-     * @todo Notify the parent (phase 13).
      *
      * @throws UnprocessableEntityHttpException when the entry is not waiting
      * @throws ConflictHttpException when the group has no free seat
@@ -189,6 +190,7 @@ class EnrollmentService
 
             $locked->update(['status' => 'offered', 'offered_at' => now()]);
             $this->audit->logChange('waitlist.offered', $locked);
+            $this->events->waitlistOffered($locked);
 
             return $locked->refresh();
         });
@@ -210,6 +212,7 @@ class EnrollmentService
 
             $locked->update(['status' => 'removed']);
             $this->audit->logChange('waitlist.offer_expired', $locked);
+            $this->events->waitlistOfferExpired($locked);
 
             return true;
         });
