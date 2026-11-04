@@ -35,6 +35,7 @@ class AttendanceController extends Controller
             ->withCount([
                 'attendance as present_count' => fn ($query) => $query->where('status', 'present'),
                 'attendance as absent_count' => fn ($query) => $query->where('status', 'absent'),
+                'attendance as excused_count' => fn ($query) => $query->where('status', 'excused'),
             ])
             ->where('status', '!=', 'cancelled')
             ->whereBetween('starts_at', [$timezone->dayStartUtc($date), $timezone->dayEndUtc($date)])

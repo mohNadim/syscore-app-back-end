@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Catalog;
 
 use App\Http\Controllers\Controller;
+use App\Models\Subscription;
 use App\Services\DisplayTimezone;
 use App\Services\SettingStore;
 use Illuminate\Http\JsonResponse;
@@ -33,6 +34,7 @@ class AppConfigController extends Controller
             'academy' => [
                 'waitlist_offer_hours' => $settings->get('academy.waitlist_offer_hours'),
                 'subscription_payment_hours' => $settings->get('academy.enrollment_payment_hours'),
+                'payment_methods' => Subscription::PAYMENT_METHODS,
             ],
             'server_time' => $timezone->utcToLocalIso(now()),
         ]]);

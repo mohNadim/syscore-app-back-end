@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 
 /**
- * A training session with its attendance counters (`enrolled_count`, `present_count`, `absent_count`).
+ * A training session with its attendance counters (`enrolled_count`, `present_count`, `absent_count`, `excused_count`; excused is not an absence).
  */
 class AttendanceSessionResource extends TrainingSessionResource
 {
@@ -21,6 +21,7 @@ class AttendanceSessionResource extends TrainingSessionResource
             'enrolled_count' => (int) $this->getAttribute('enrolled_count'),
             'present_count' => (int) $this->getAttribute('present_count'),
             'absent_count' => (int) $this->getAttribute('absent_count'),
+            'excused_count' => (int) $this->getAttribute('excused_count'),
         ];
     }
 }

@@ -26,6 +26,8 @@ class SubscriptionResource extends JsonResource
             'enrollment_id' => $this->enrollment_id,
             'enrollment' => new EnrollmentResource($this->whenLoaded('enrollment')),
             'status' => $this->status,
+            'payment_method' => $this->payment_method,
+            'order_number' => $this->order_number,
             'period_start' => $this->period_start ? $timezone->utcToLocalIso($this->period_start) : null,
             'period_end' => $this->period_end ? $timezone->utcToLocalIso($this->period_end) : null,
             'base_price' => $this->base_price,

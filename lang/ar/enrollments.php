@@ -26,6 +26,7 @@ return [
     ],
 
     'validation' => [
+        'payment_method_invalid' => 'طريقة الدفع يجب أن تكون sham_cash أو cash_at_reception.',
         'child_id_invalid' => 'الطفل يجب أن يكون معرّف طفل موجود.',
         'group_id_invalid' => 'المجموعة يجب أن تكون معرّف مجموعة أكاديمية موجودة.',
         'status_invalid' => 'الحالة يجب أن تكون إحدى القيم: active, ended, cancelled.',

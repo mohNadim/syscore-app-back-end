@@ -196,7 +196,7 @@
 | `api/admin-enrollments` ✅ | إدارة التسجيلات والاشتراكات وقائمة الانتظار |
 
 **ملاحظات المرحلة 7:**
-- التسجيل يحجز المقعد فوراً مع اشتراك `pending_payment`، والعروض `offered` من قائمة الانتظار تُحسب من السعة أيضاً. إعداد جديد `academy.enrollment_payment_hours` (48) لمهمة المرحلة 11 التي تلغي غير المدفوع.
+- التسجيل يحجز المقعد فوراً مع اشتراك `pending_payment`، والعروض `offered` من قائمة الانتظار تُحسب من السعة أيضاً. حالة الحضور `present|absent|excused` (الغياب بعذر لا يُحسب غياباً ولا ضمن `total`/`attendance_rate` ولا يرسل إشعاراً). `POST enrollments` يقبل `payment_method` (`sham_cash` افتراضي أو `cash_at_reception`): الاشتراك يبقى `pending_payment` ويحجز المقعد ضمن `academy.enrollment_payment_hours`، ويحمل `order_number` (`ENR-000123`) ويظهر `payment_method`/`order_number` في SubscriptionResource، والدفع يتم من الإدارة عبر الدفع النقدي؛ و`app-config` يعيد `academy.payment_methods`. إعداد جديد `academy.enrollment_payment_hours` (48) لمهمة المرحلة 11 التي تلغي غير المدفوع.
 - قفل `academy_groups` (`FOR UPDATE`) قبل عدّ المقاعد، واختبار curl المتوازي أعطى 201 واحداً و202 واحداً.
 - إلغاء الاشتراك المدفوع من التطبيق يبقيه حتى `period_end` (يُحفظ في `enrollments.ended_at`)، وغير المدفوع يُلغى فوراً.
 - المدير يعرض المقعد يدوياً على المنتظر، وانتهاء العرض في المرحلة 11، والإشعار مع المرحلة 13.
@@ -230,9 +230,9 @@
 
 **ملاحظات المرحلة 9:**
 - صلاحية الإدارة `attendance.manage`. التسجيل upsert لكل طفل (تكرار الطلب يصحح الخطأ)، ويُرفض (409) للحصة الملغاة أو التي لم تبدأ، و(422) لطفل غير مسجّل فعلياً في مجموعة الحصة، ولا يُحفظ شيء عند أي خطأ.
-- `GET admin/sessions` يستثني الحصص الملغاة ويعيد `enrolled_count` و `present_count` و `absent_count`.
+- `GET admin/sessions` يستثني الحصص الملغاة ويعيد `enrolled_count` و `present_count` و `absent_count` و `excused_count`.
 - جدول الطفل: افتراضياً اليوم و13 يوماً بعده (حد أقصى 62 يوماً)، ويشمل الملغاة، مع `attendance_status`.
-- حضور الطفل مرقّم، مع `summary` (`present` و `absent` و `total` و `attendance_rate` نسبة مئوية أو `null`) على نفس نطاق التواريخ.
+- حضور الطفل مرقّم، مع `summary` (`present` و `absent` و `excused` و `total` و `attendance_rate` نسبة مئوية أو `null`) على نفس نطاق التواريخ.
 
 ### المرحلة 10: إدارة المحتوى والأعضاء ✅ مدمجة في `feature/api`
 | البرانش | Endpoints |

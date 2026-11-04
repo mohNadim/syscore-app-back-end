@@ -79,6 +79,22 @@ class ScheduledJobsTest extends TestCase
         $this->assertSame('active', $freshEnrollment->refresh()->status);
     }
 
+    public function test_unpaid_cash_at_reception_subscription_still_expires(): void
+    {
+        $enrollment = Enrollment::factory()->create();
+        $stale = Subscription::factory()->create([
+            'enrollment_id' => $enrollment->id,
+            'payment_method' => 'cash_at_reception',
+            'order_number' => 'ENR-000001',
+            'created_at' => now()->subHours(49),
+        ]);
+
+        $this->artisan('subscriptions:expire-unpaid')->assertSuccessful();
+
+        $this->assertSame('cancelled', $stale->refresh()->status);
+        $this->assertSame('cancelled', $enrollment->refresh()->status);
+    }
+
     public function test_unpaid_renewal_is_cancelled_but_the_enrollment_stays_active(): void
     {
         $enrollment = Enrollment::factory()->create();

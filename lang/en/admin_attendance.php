@@ -16,7 +16,7 @@ return [
         'child_id_invalid' => 'The child must be a whole number.',
         'child_id_duplicate' => 'The same child cannot appear twice.',
         'status_required' => 'The attendance status is required for every record.',
-        'status_invalid' => 'The status must be present or absent.',
+        'status_invalid' => 'The status must be present, absent or excused.',
     ],
 
 ];

@@ -169,6 +169,18 @@ class AdminAttendanceTest extends TestCase
         $this->assertSame(2, AuditLog::query()->where('action', 'attendance.marked')->count());
     }
 
+    public function test_excused_status_is_accepted_and_counted_separately(): void
+    {
+        $this->putJson($this->attendanceUrl(), ['records' => [
+            ['child_id' => $this->enrolledChild->id, 'status' => 'excused'],
+        ]])->assertOk()->assertJsonPath('data.0.status', 'excused');
+
+        $this->getJson('/api/v1/admin/sessions?date=2026-10-26')
+            ->assertOk()
+            ->assertJsonPath('data.0.excused_count', 1)
+            ->assertJsonPath('data.0.absent_count', 0);
+    }
+
     public function test_invalid_records_are_rejected_in_both_languages(): void
     {
         $this->putJson($this->attendanceUrl(), [])

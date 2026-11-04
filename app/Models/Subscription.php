@@ -9,13 +9,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['enrollment_id', 'status', 'period_start', 'period_end', 'base_price', 'discount_id', 'discount_amount', 'final_price', 'renewed_from_id', 'reminder_7d_sent_at', 'expiry_notice_sent_at'])]
+#[Fillable(['enrollment_id', 'status', 'period_start', 'period_end', 'base_price', 'discount_id', 'discount_amount', 'final_price', 'renewed_from_id', 'reminder_7d_sent_at', 'expiry_notice_sent_at', 'payment_method', 'order_number'])]
 class Subscription extends Model
 {
     /** @use HasFactory<SubscriptionFactory> */
     use HasFactory;
 
     public const UPDATED_AT = null;
+
+    public const PAYMENT_METHOD_SHAM_CASH = 'sham_cash';
+
+    public const PAYMENT_METHOD_CASH_AT_RECEPTION = 'cash_at_reception';
+
+    /**
+     * How the first subscription of an enrollment can be paid.
+     *
+     * @var list<string>
+     */
+    public const PAYMENT_METHODS = [self::PAYMENT_METHOD_SHAM_CASH, self::PAYMENT_METHOD_CASH_AT_RECEPTION];
 
     /**
      * Get the attributes that should be cast.

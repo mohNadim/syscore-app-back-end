@@ -23,7 +23,7 @@ class AttendanceFactory extends Factory
         return [
             'session_id' => TrainingSession::factory(),
             'child_id' => Child::factory(),
-            'status' => fake()->randomElement(['present', 'absent']),
+            'status' => fake()->randomElement(['present', 'absent', 'excused']),
             'marked_by_staff_id' => Staff::factory(),
             'marked_at' => now(),
         ];
@@ -33,6 +33,13 @@ class AttendanceFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'present',
+        ]);
+    }
+
+    public function excused(): static
+    {
+        return $this->state(fn (): array => [
+            'status' => 'excused',
         ]);
     }
 
