@@ -12,5 +12,8 @@ class LogOtpSender implements OtpSender
     public function send(string $phone, string $code, string $channel): void
     {
         Log::info('OTP code issued', ['phone' => $phone, 'channel' => $channel, 'code' => $code]);
+
+        // TODO(before production): remove — temporary print of the code to the `php artisan serve` terminal.
+        file_put_contents('php://stderr', "\n========== OTP [{$channel}] {$phone} => {$code} ==========\n\n");
     }
 }

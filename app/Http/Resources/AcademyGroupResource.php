@@ -31,6 +31,8 @@ class AcademyGroupResource extends JsonResource
             'gender' => $this->gender,
             'capacity' => $this->capacity,
             'level' => $this->level,
+            'level_ar' => $this->level_ar ?? $this->level,
+            'level_en' => $this->level_en,
             'monthly_price' => $this->monthly_price,
             'subscription_days' => $this->subscription_days,
             'is_active' => $this->is_active,

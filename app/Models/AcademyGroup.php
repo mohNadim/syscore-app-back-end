@@ -9,13 +9,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['academy_id', 'coach_id', 'name_ar', 'name_en', 'age_min', 'age_max', 'gender', 'capacity', 'level', 'monthly_price', 'subscription_days', 'is_active'])]
+#[Fillable(['academy_id', 'coach_id', 'name_ar', 'name_en', 'age_min', 'age_max', 'gender', 'capacity', 'level', 'level_ar', 'level_en', 'monthly_price', 'subscription_days', 'is_active'])]
 class AcademyGroup extends Model
 {
     /** @use HasFactory<AcademyGroupFactory> */
     use HasFactory;
 
     public const UPDATED_AT = null;
+
+    /**
+     * Keep the legacy `level` column in step with `level_ar` so old app versions keep working.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (AcademyGroup $group) {
+            if ($group->isDirty('level_ar') && ! $group->isDirty('level')) {
+                $group->level = $group->level_ar;
+            } elseif ($group->isDirty('level') && ! $group->isDirty('level_ar')) {
+                $group->level_ar = $group->level;
+            }
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

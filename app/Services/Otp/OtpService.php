@@ -17,13 +17,13 @@ class OtpService
     /**
      * Issue a new code for the phone and send it through the configured channel.
      *
-     * @return array{expires_in: int, resend_after: int}
+     * @return array{expires_in: int, resend_after: int, debug_code?: string}
      *
      * @throws TooManyRequestsHttpException when the previous code was sent less than the cooldown ago
      */
     public function issue(string $phone): array
     {
-        $cooldownSeconds = (int) $this->settings->get('otp.resend_cooldown_seconds', 60);
+        $cooldownSeconds = config('auth.throttle_enabled') ? (int) $this->settings->get('otp.resend_cooldown_seconds', 60) : 0;
         $ttlMinutes = (int) $this->settings->get('otp.ttl_minutes', 5);
         $channel = (string) $this->settings->get('otp.channel', 'sms');
 
@@ -52,6 +52,8 @@ class OtpService
         return [
             'expires_in' => $ttlMinutes * 60,
             'resend_after' => $cooldownSeconds,
+            // TODO(before production): remove debug_code — temporary so the Flutter app can print the OTP during development.
+            ...(config('app.debug') ? ['debug_code' => $code] : []),
         ];
     }
 

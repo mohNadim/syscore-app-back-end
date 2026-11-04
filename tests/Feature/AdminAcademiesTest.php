@@ -265,6 +265,23 @@ class AdminAcademiesTest extends TestCase
         Storage::disk('public')->assertMissing($this->pathOf($url));
     }
 
+    public function test_group_level_translations_are_stored_and_returned(): void
+    {
+        $this->actingAsAcademiesManager();
+        $academy = Academy::factory()->create();
+
+        $this->postJson("/api/v1/admin/academies/{$academy->id}/groups", $this->groupPayload(['level_ar' => 'مبتدئ', 'level_en' => 'Beginner']))
+            ->assertCreated()
+            ->assertJsonPath('data.level', 'مبتدئ')
+            ->assertJsonPath('data.level_ar', 'مبتدئ')
+            ->assertJsonPath('data.level_en', 'Beginner');
+
+        $this->postJson("/api/v1/admin/academies/{$academy->id}/groups", $this->groupPayload(['level' => 'متوسط']))
+            ->assertCreated()
+            ->assertJsonPath('data.level_ar', 'متوسط')
+            ->assertJsonPath('data.level_en', null);
+    }
+
     public function test_group_crud_and_audit(): void
     {
         $this->actingAsAcademiesManager();

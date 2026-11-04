@@ -40,10 +40,15 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Limit OTP requests per phone number and per IP (on top of the resend cooldown setting) and staff login attempts per username and IP.
+     * All limits are lifted when auth.throttle_enabled is off (development only).
      */
     private function configureRateLimiting(): void
     {
         RateLimiter::for('otp-request', function (Request $request): array {
+            if (! config('auth.throttle_enabled')) {
+                return [Limit::none()];
+            }
+
             $phone = is_string($request->input('phone')) ? PhoneNumber::normalize($request->input('phone')) : '';
 
             return [
@@ -53,11 +58,17 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('admin-login', function (Request $request): Limit {
+            if (! config('auth.throttle_enabled')) {
+                return Limit::none();
+            }
+
             $username = is_string($request->input('username')) ? mb_strtolower($request->input('username')) : '';
 
             return Limit::perMinute(5)->by('admin-login:'.$username.'|'.$request->ip());
         });
 
-        RateLimiter::for('otp-verify', fn (Request $request): Limit => Limit::perMinute(10)->by('otp-verify:ip:'.$request->ip()));
+        RateLimiter::for('otp-verify', fn (Request $request): Limit => config('auth.throttle_enabled')
+            ? Limit::perMinute(10)->by('otp-verify:ip:'.$request->ip())
+            : Limit::none());
     }
 }

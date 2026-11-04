@@ -114,4 +114,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Login Throttling
+    |--------------------------------------------------------------------------
+    |
+    | When disabled, the OTP request/verify and staff login rate limiters and
+    | the OTP resend cooldown are skipped. Only turn this off while testing.
+    |
+    */
+
+    'throttle_enabled' => (bool) env('AUTH_THROTTLE_ENABLED', true),
+
 ];

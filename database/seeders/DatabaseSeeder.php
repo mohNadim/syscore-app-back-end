@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             FacilitySeeder::class,
             SettingSeeder::class,
             DemoBookingDataSeeder::class,
+            DemoAppDataSeeder::class,
         ]);
     }
 }
