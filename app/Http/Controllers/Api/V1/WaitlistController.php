@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\BusinessRuleException;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EnrollmentResource;
 use App\Http\Resources\WaitlistEntryResource;
 use App\Models\WaitlistEntry;
 use App\Services\Academies\EnrollmentService;
@@ -31,6 +33,27 @@ class WaitlistController extends Controller
         $entries->each(fn (WaitlistEntry $entry) => $entry->setAttribute('position', $enrollments->waitlistPosition($entry)));
 
         return WaitlistEntryResource::collection($entries);
+    }
+
+    /**
+     * Accept the seat offered to a child: enrolls it in the group exactly as `POST /enrollments` does.
+     *
+     * @throws BusinessRuleException when the entry has no open offer (waitlist_offer_not_available) or the offer expired (waitlist_offer_expired)
+     */
+    public function accept(WaitlistEntry $waitlistEntry, EnrollmentService $enrollments): JsonResponse
+    {
+        Gate::authorize('accept', $waitlistEntry);
+
+        if ($waitlistEntry->status !== 'offered') {
+            throw new BusinessRuleException('waitlist_offer_not_available', __('enrollments.waitlist_offer_not_available'));
+        }
+
+        $result = $enrollments->enroll($waitlistEntry->child, $waitlistEntry->group);
+
+        return response()->json([
+            'message' => __('enrollments.enrolled'),
+            'data' => new EnrollmentResource($result->enrollment->load(['child', 'group.academy.sport', 'latestSubscription.discount'])),
+        ], 201);
     }
 
     /**

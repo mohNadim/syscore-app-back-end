@@ -6,6 +6,7 @@ use App\Models\Academy;
 use App\Models\AcademyGroup;
 use App\Models\BookableUnit;
 use App\Models\Coach;
+use App\Models\Enrollment;
 use App\Models\Facility;
 use App\Models\GalleryAlbum;
 use App\Models\GalleryPhoto;
@@ -14,7 +15,9 @@ use App\Models\News;
 use App\Models\Setting;
 use App\Models\Space;
 use App\Models\Sport;
+use App\Models\WaitlistEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PublicCatalogTest extends TestCase
@@ -212,5 +215,42 @@ class PublicCatalogTest extends TestCase
             ->getJson('/api/v1/news?per_page=99')
             ->assertUnprocessable()
             ->assertJsonPath('errors.per_page.0', __('catalog.validation.per_page_invalid', [], 'en'));
+    }
+
+    public function test_public_groups_expose_seats_left_is_full_and_expected_position(): void
+    {
+        $academy = Academy::factory()->create();
+        $full = AcademyGroup::factory()->create(['academy_id' => $academy->id, 'capacity' => 2]);
+        $open = AcademyGroup::factory()->create(['academy_id' => $academy->id, 'capacity' => 5]);
+        Enrollment::factory()->count(2)->create(['group_id' => $full->id]);
+        Enrollment::factory()->create(['group_id' => $open->id]);
+        Enrollment::factory()->create(['group_id' => $open->id, 'status' => 'ended']);
+        WaitlistEntry::factory()->count(2)->create(['group_id' => $full->id, 'status' => 'waiting']);
+        WaitlistEntry::factory()->create(['group_id' => $open->id, 'status' => 'offered', 'offered_at' => now()]);
+
+        $assertGroups = function (array $groups) use ($full, $open): void {
+            $groups = collect($groups)->keyBy('id');
+            $this->assertSame(0, $groups[$full->id]['seats_left']);
+            $this->assertTrue($groups[$full->id]['is_full']);
+            $this->assertSame(3, $groups[$full->id]['expected_position']);
+            $this->assertSame(3, $groups[$open->id]['seats_left']);
+            $this->assertFalse($groups[$open->id]['is_full']);
+            $this->assertNull($groups[$open->id]['expected_position']);
+        };
+
+        $assertGroups($this->getJson('/api/v1/academies')->assertOk()->json('data.0.groups'));
+        $assertGroups($this->getJson("/api/v1/academies/{$academy->id}")->assertOk()->json('data.groups'));
+    }
+
+    public function test_public_group_listing_does_not_query_per_group(): void
+    {
+        $academy = Academy::factory()->create();
+        AcademyGroup::factory()->count(6)->create(['academy_id' => $academy->id]);
+
+        DB::enableQueryLog();
+        $this->getJson('/api/v1/academies')->assertOk();
+        $queries = count(DB::getQueryLog());
+
+        $this->assertLessThan(15, $queries);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Academies;
 
+use App\Exceptions\BusinessRuleException;
 use App\Models\Enrollment;
 use App\Models\Subscription;
 use App\Services\AuditLogger;
@@ -88,6 +89,66 @@ class SubscriptionService
             } else {
                 throw new UnprocessableEntityHttpException(__('subscriptions.not_cancellable'));
             }
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Cancel an enrollment on behalf of its owner: unpaid subscriptions are dropped (cancelling the enrollment now when nothing
+     * is paid), otherwise the paid month stays valid and the enrollment is scheduled to end when it runs out.
+     *
+     * @throws BusinessRuleException when the enrollment is not active (enrollment_not_cancellable) or its end is already scheduled (enrollment_already_cancelling)
+     */
+    public function cancelEnrollmentByUser(Enrollment $enrollment): Enrollment
+    {
+        return DB::transaction(function () use ($enrollment): Enrollment {
+            $locked = Enrollment::query()->lockForUpdate()->findOrFail($enrollment->id);
+
+            if ($locked->status !== 'active') {
+                throw new BusinessRuleException('enrollment_not_cancellable', __('enrollments.enrollment_not_cancellable'));
+            }
+
+            if ($locked->ended_at !== null) {
+                throw new BusinessRuleException('enrollment_already_cancelling', __('enrollments.enrollment_already_cancelling'));
+            }
+
+            $running = $locked->subscriptions()->where('status', 'active')->latest('id')->first();
+
+            if ($running !== null) {
+                $this->scheduleEnd($running, $locked);
+            } else {
+                foreach ($locked->subscriptions()->where('status', 'pending_payment')->get() as $unpaid) {
+                    $this->cancelUnpaid($unpaid, $locked);
+                }
+
+                if ($locked->status === 'active') {
+                    $locked->update(['status' => 'cancelled', 'ended_at' => now()]);
+                    $this->audit->logChange('enrollment.cancelled', $locked);
+                }
+            }
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Revert a cancellation that has not taken effect yet, so the enrollment keeps running.
+     *
+     * @throws BusinessRuleException when no future end is scheduled (code: enrollment_not_cancelling)
+     */
+    public function undoEnrollmentCancellation(Enrollment $enrollment): Enrollment
+    {
+        return DB::transaction(function () use ($enrollment): Enrollment {
+            $locked = Enrollment::query()->lockForUpdate()->findOrFail($enrollment->id);
+
+            if ($locked->status !== 'active' || $locked->ended_at === null || ! $locked->ended_at->isFuture()) {
+                throw new BusinessRuleException('enrollment_not_cancelling', __('enrollments.enrollment_not_cancelling'));
+            }
+
+            $before = ['ended_at' => $locked->ended_at->toIso8601String()];
+            $locked->update(['ended_at' => null]);
+            $this->audit->log('enrollment.cancellation_undone', $locked, $before, ['ended_at' => null]);
 
             return $locked->refresh();
         });

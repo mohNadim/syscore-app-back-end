@@ -2,6 +2,7 @@
 
 namespace App\Services\Academies;
 
+use App\Exceptions\BusinessRuleException;
 use App\Models\AcademyGroup;
 use App\Models\Child;
 use App\Models\Enrollment;
@@ -11,9 +12,11 @@ use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
 use App\Services\Notifications\NotificationEvents;
 use App\Services\Pricing\PricingService;
+use App\Services\SettingStore;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -26,6 +29,7 @@ class EnrollmentService
         protected DisplayTimezone $timezone,
         protected AuditLogger $audit,
         protected NotificationEvents $events,
+        protected SettingStore $settings,
     ) {}
 
     /**
@@ -47,15 +51,29 @@ class EnrollmentService
     /**
      * Add the seat counters that `seatsLeft()` reads to a groups query.
      *
-     * @param  Builder<AcademyGroup>  $query
-     * @return Builder<AcademyGroup>
+     * Also adds `waiting_waitlist_entries_count`, which `expectedPosition()` reads.
+     *
+     * @param  Builder<AcademyGroup>|Relation<AcademyGroup, *, *>  $query
+     * @return Builder<AcademyGroup>|Relation<AcademyGroup, *, *>
      */
-    public function withSeatCounts(Builder $query): Builder
+    public function withSeatCounts(Builder|Relation $query): Builder|Relation
     {
         return $query->withCount([
             'enrollments as active_enrollments_count' => fn ($enrollments) => $enrollments->where('status', 'active'),
             'waitlistEntries as offered_waitlist_entries_count' => fn ($entries) => $entries->where('status', 'offered'),
+            'waitlistEntries as waiting_waitlist_entries_count' => fn ($entries) => $entries->where('status', 'waiting'),
         ]);
+    }
+
+    /**
+     * The place a child joining the group's waitlist now would take: the waiting entries plus one.
+     */
+    public function expectedPosition(AcademyGroup $group): int
+    {
+        $waiting = $group->getAttribute('waiting_waitlist_entries_count')
+            ?? $group->waitlistEntries()->where('status', 'waiting')->count();
+
+        return (int) $waiting + 1;
     }
 
     /**
@@ -102,6 +120,7 @@ class EnrollmentService
      *
      * @throws ValidationException when the child or group is not eligible
      * @throws ConflictHttpException when the child is already enrolled or already waiting
+     * @throws BusinessRuleException when the child's offer is older than the offer window (code: waitlist_offer_expired)
      */
     public function enroll(Child $child, AcademyGroup $group, ?Staff $staff = null, bool $overrideCapacity = false): EnrollResult
     {
@@ -122,6 +141,10 @@ class EnrollmentService
 
             $entry = WaitlistEntry::query()->where('group_id', $locked->id)->where('child_id', $child->id)->first();
             $isOffered = $entry?->status === 'offered';
+
+            if ($isOffered && $staff === null && $this->offerHasExpired($entry)) {
+                throw new BusinessRuleException('waitlist_offer_expired', __('enrollments.waitlist_offer_expired'));
+            }
 
             if ($entry?->status === 'waiting' && ! $overrideCapacity) {
                 throw new ConflictHttpException(__('enrollments.already_waitlisted'));
@@ -257,6 +280,15 @@ class EnrollmentService
 
             return $locked->refresh();
         });
+    }
+
+    /**
+     * Whether the offer was made longer ago than the configured offer window.
+     */
+    protected function offerHasExpired(WaitlistEntry $entry): bool
+    {
+        return $entry->offered_at !== null
+            && $entry->offered_at->lte(now()->subHours((int) $this->settings->get('academy.waitlist_offer_hours')));
     }
 
     /**
