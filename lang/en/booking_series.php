@@ -17,7 +17,7 @@ return [
         'last_before_first' => 'The last date cannot be before the first date.',
         'first_date_past' => 'The first date cannot be in the past.',
         'outside_booking_window' => 'The last date is too far ahead. Please choose an earlier date.',
-        'payment_mode_invalid' => 'The payment mode must be one of: online_full, deposit_then_cash.',
+        'payment_mode_invalid' => 'The payment mode must be one of: online_full, deposit_then_cash, cash_only.',
         'skip_unavailable_invalid' => 'The skip option must be true or false.',
         'per_page_invalid' => 'The page size must be a whole number between 1 and 100.',
         'reason_invalid' => 'The reason must be text of at most 255 characters.',

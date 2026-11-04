@@ -31,7 +31,7 @@ class StoreBookingRequest extends FormRequest
             'sport_id' => ['bail', 'required', 'integer', 'exists:sports,id'],
             'starts_at' => ['bail', 'required', 'date_format:Y-m-d H:i'],
             'duration_minutes' => ['bail', 'required', 'integer', 'min:1', 'max:'.BookingService::MAX_DURATION_MINUTES],
-            'payment_mode' => ['bail', 'required', 'in:online_full,deposit_then_cash'],
+            'payment_mode' => ['bail', 'required', 'in:online_full,deposit_then_cash,cash_only'],
         ];
     }
 

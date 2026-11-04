@@ -166,7 +166,7 @@
 ### المرحلة 6: التوفر والحجز ✅ مدمجة في `feature/api`
 | البرانش | Endpoints |
 |---|---|
-| `api/availability` ✅ | `GET availability?facility_id=&date=` |
+| `api/availability` ✅ | `GET availability?facility_id=&date=` ، `GET availability/nearest?facility_id=&sport_id=&limit=` (أقرب خانة متاحة اليوم لكل وحدة)، `GET announcements/{id}`، `GET discounts`، `GET discounts/{id}` (مصادقة) |
 | `api/bookings` ✅ | `POST bookings` و `GET bookings` و `GET bookings/{id}` و `POST bookings/{id}/cancel` |
 | `api/booking-series` ✅ | `preview` و `store` وإلغاء حجز واحد أو السلسلة كاملة |
 | `api/admin-bookings` ✅ | حجز سريع لعميل غير مسجل، وإلغاء، وتسجيل `no_show` |
@@ -182,7 +182,7 @@
 - إلغاء بعد انتهاء المهلة.
 
 **ملاحظات المرحلة 6:**
-- حجز التطبيق يبدأ `pending_deposit` ويحجز الملعب حتى `deposit_due_at`، والمستخدم يختار `online_full` (كامل المبلغ) أو `deposit_then_cash` (عربون ثم الباقي أونلاين أو نقداً). إلغاء غير المدفوع تلقائياً في المرحلة 11.
+- حجز التطبيق يبدأ `pending_deposit` ويحجز الملعب حتى `deposit_due_at`، والمستخدم يختار `online_full` (كامل المبلغ) أو `deposit_then_cash` أو `cash_only` (يتأكد الحجز فوراً دون دفع إلكتروني والباقي نقداً؛ يُعطَّل بالإعداد `booking.cash_only_enabled` ويُرفض بالكود `payment_option_disabled`، و`app-config` يعيد `booking.payment_options`) (عربون ثم الباقي أونلاين أو نقداً). إلغاء غير المدفوع تلقائياً في المرحلة 11.
 - حجز الاستقبال `confirmed` مباشرة، ومستثنى من نافذة الحجز المسبق فقط.
 - إلغاء المستخدم بعد المهلة يُرفض (422)، والموظف يلغي حتى نهاية الموعد. الاسترداد في المرحلة 8.
 - السلسلة: الافتراضي الكل أو لا شيء (409 مع قائمة التواريخ)، ومع `skip_unavailable=true` تُحجز المتاحة وتُتخطى الباقية.

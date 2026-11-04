@@ -4,6 +4,7 @@ return [
 
     'created' => 'Booking created successfully.',
     'cancelled' => 'Booking cancelled successfully.',
+    'payment_option_disabled' => 'This payment option is currently not available.',
     'slot_taken' => 'This time was just booked by someone else. Please choose another time.',
     'not_cancellable' => 'This booking can no longer be cancelled.',
     'cancellation_deadline_passed' => 'The cancellation deadline has passed. Please contact the administration.',
@@ -17,7 +18,7 @@ return [
         'starts_at_invalid' => 'The start is required in YYYY-MM-DD HH:MM format.',
         'duration_invalid' => 'The duration must be a whole number of minutes between 1 and 600.',
         'duration_not_multiple' => 'The duration must be a multiple of :minutes minutes and at least :minutes minutes.',
-        'payment_mode_invalid' => 'The payment mode must be one of: online_full, deposit_then_cash.',
+        'payment_mode_invalid' => 'The payment mode must be one of: online_full, deposit_then_cash, cash_only.',
         'past_start' => 'The booking start must be in the future.',
         'outside_booking_window' => 'The booking is too far ahead. Please choose an earlier date.',
         'outside_operating_hours' => 'The booking must be inside the facility operating hours for that day.',

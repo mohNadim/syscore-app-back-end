@@ -15,7 +15,7 @@ class StoreBookingSeriesRequest extends PreviewBookingSeriesRequest
     {
         return [
             ...parent::rules(),
-            'payment_mode' => ['bail', 'required', 'in:online_full,deposit_then_cash'],
+            'payment_mode' => ['bail', 'required', 'in:online_full,deposit_then_cash,cash_only'],
             'skip_unavailable' => ['bail', 'sometimes', 'boolean'],
         ];
     }

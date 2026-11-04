@@ -22,6 +22,7 @@ class UpdateSettingsRequest extends FormRequest
         'booking.deposit_deadline_minutes' => ['sometimes', 'integer', 'between:5,1440'],
         'booking.cancellation_deadline_hours' => ['sometimes', 'integer', 'between:0,168'],
         'booking.reminder_minutes_before' => ['sometimes', 'integer', 'between:1,4320'],
+        'booking.cash_only_enabled' => ['sometimes', 'boolean'],
         'otp.channel' => ['sometimes', 'string', 'in:sms,whatsapp,telegram'],
         'otp.ttl_minutes' => ['sometimes', 'integer', 'between:1,30'],
         'otp.max_attempts' => ['sometimes', 'integer', 'between:1,10'],

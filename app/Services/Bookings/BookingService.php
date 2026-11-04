@@ -82,6 +82,7 @@ class BookingService
      * @param  array{unit: BookableUnit, sport_id: int|null, starts_at: CarbonInterface, duration_minutes: int, user?: User|null, guest_name?: string|null, guest_phone?: string|null, payment_mode: string, source: string, series_id?: int|null}  $data
      *
      * @throws ConflictHttpException when a space of the unit is already reserved for part of the interval
+     * @throws BusinessRuleException when the payment option is disabled (code: payment_option_disabled)
      */
     public function createWithinLockedTransaction(array $data, BookableUnit $unit, CarbonInterface $startsAt, CarbonInterface $endsAt, ?Staff $staff = null): Booking
     {
@@ -91,9 +92,14 @@ class BookingService
             throw new ConflictHttpException(__('bookings.slot_taken'));
         }
 
+        $isApp = $data['source'] === 'app';
+
+        if ($isApp && $data['payment_mode'] === 'cash_only' && ! (bool) $this->settings->get('booking.cash_only_enabled')) {
+            throw new BusinessRuleException('payment_option_disabled', __('bookings.payment_option_disabled'));
+        }
+
         $user = $data['user'] ?? null;
         $quote = $this->pricing->quoteBooking($unit, $startsAt, $endsAt, $user, $data['sport_id'] ?? null);
-        $isApp = $data['source'] === 'app';
         $depositPercent = (int) $this->settings->get('booking.deposit_percent');
 
         $deposit = match (true) {
@@ -102,7 +108,7 @@ class BookingService
             default => 0,
         };
 
-        $awaitsDeposit = $isApp && $quote->finalPrice > 0;
+        $awaitsDeposit = $isApp && $quote->finalPrice > 0 && $data['payment_mode'] !== 'cash_only';
 
         $booking = new Booking([
             'user_id' => $user?->id,
