@@ -274,13 +274,13 @@
 - سجل التدقيق: `GET admin/audit-logs` و`{id}` بصلاحية `audit_logs.view`، والفلاتر بأسماء الأعمدة (`entity_type`, `entity_id`, `actor_*`, `action`, التواريخ).
 
 ### المرحلة 13 (مؤجلة): الإشعارات والإعلانات
-- `api/notifications` ✅: صندوق الإشعارات، و `read`، و `read-all`.
+- `api/notifications` ✅: صندوق الإشعارات، و `read`، و `read-all`، و `delete`، و `delete-all`.
 - `api/admin-announcements` ✅: الإرسال للجميع أو لمشتركي أكاديمية، عبر Job في الطابور.
 - `api/notification-events` ✅: ربط الأحداث (تأكيد الحجز والدفع، تذكير قبل ساعتين، غياب الطفل، انتهاء الاشتراك، إلغاء/تعديل جلسة، خصم جديد).
 - Firebase جاهز في الباكند بالكامل. تحتاج أيضاً أن يُكمل تطبيق Flutter ربط Firebase (انظر آخر الملف).
 
 **ملاحظات `api/notifications`:**
-- `GET notifications` (`unread=1` و`per_page`، و`meta.unread_count`)، و`POST notifications/{id}/read`، و`POST notifications/read-all`. إشعار مستخدم آخر يعطي 404.
+- `GET notifications` (`unread=1` و`per_page`، و`meta.unread_count`)، و`POST notifications/{id}/read`، و`POST notifications/read-all`. `DELETE notifications/{id}` (حذف إشعار واحد)، و`DELETE notifications` (حذف الكل، أو المقروء فقط بـ `?read=1`، ويعيد `data.deleted`). إشعار مستخدم آخر يعطي 404.
 - نقطة الدخول الوحيدة للمراحل القادمة: `NotificationService::notify($user, $type, ['ar'=>..,'en'=>..], ['ar'=>..,'en'=>..], $data, $announcementId)`؛ تنشئ الصف وترسل Job `SendPushNotification` (طابور، 3 محاولات، بعد الـ commit) يضع `push_sent_at` عند نجاح الإرسال لجهاز واحد على الأقل.
 - المرسل خلف الواجهة `PushSender`، والمتغير `NOTIFICATIONS_PUSH_DRIVER=fake|fcm` (الافتراضي `fake` يكتب في السجل فقط، و`fcm` للإنتاج). مرسل FCM يختار اللغة من `users.preferred_lang` (العربية افتراضياً مع رجوع للإنجليزية)، ويحوّل قيم `data` إلى نصوص، ويحذف التوكنات unknown/invalid، ولا يرمي استثناء أبداً.
 

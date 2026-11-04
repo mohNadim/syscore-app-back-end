@@ -4,6 +4,8 @@ return [
 
     'read' => 'Notification marked as read.',
     'read_all' => 'All notifications marked as read.',
+    'deleted' => 'Notification deleted.',
+    'deleted_all' => 'Notifications deleted.',
 
     'events' => [
         'booking_confirmed' => [
@@ -70,6 +72,7 @@ return [
 
     'validation' => [
         'unread_invalid' => 'The unread filter must be true or false.',
+        'read_invalid' => 'The read filter must be true or false.',
         'per_page_invalid' => 'The page size must be a whole number between 1 and 100.',
     ],
 
