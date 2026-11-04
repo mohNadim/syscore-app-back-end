@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Notifications\DestroyAllNotificationsRequest;
 use App\Http\Requests\Api\V1\Notifications\IndexNotificationRequest;
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
@@ -56,6 +57,35 @@ class NotificationController extends Controller
         return response()->json([
             'message' => __('notifications.read_all'),
             'data' => ['updated' => $updated],
+        ]);
+    }
+
+    /**
+     * Delete one of the user's notifications.
+     */
+    public function destroy(Notification $notification): JsonResponse
+    {
+        abort_unless($notification->user_id === request()->user()->id, 404);
+
+        $notification->delete();
+
+        return response()->json([
+            'message' => __('notifications.deleted'),
+        ]);
+    }
+
+    /**
+     * Delete all of the user's notifications, or only the read ones when `read` is true.
+     */
+    public function destroyAll(DestroyAllNotificationsRequest $request): JsonResponse
+    {
+        $deleted = $request->user()->notifications()
+            ->when($request->boolean('read'), fn ($query) => $query->whereNotNull('read_at'))
+            ->delete();
+
+        return response()->json([
+            'message' => __('notifications.deleted_all'),
+            'data' => ['deleted' => $deleted],
         ]);
     }
 }
