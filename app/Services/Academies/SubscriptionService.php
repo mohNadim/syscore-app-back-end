@@ -6,6 +6,7 @@ use App\Models\Enrollment;
 use App\Models\Subscription;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
+use App\Services\Notifications\NotificationEvents;
 use App\Services\Pricing\PricingService;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ class SubscriptionService
         protected PricingService $pricing,
         protected DisplayTimezone $timezone,
         protected AuditLogger $audit,
+        protected NotificationEvents $events,
     ) {}
 
     /**
@@ -135,6 +137,7 @@ class SubscriptionService
             }
 
             $this->cancelUnpaid($locked, $enrollment);
+            $this->events->subscriptionUnpaidExpired($locked);
 
             return true;
         });
@@ -156,6 +159,12 @@ class SubscriptionService
 
             $locked->update(['status' => 'expired']);
             $this->audit->logChange('subscription.expired', $locked);
+
+            DB::afterCommit(function () use ($locked): void {
+                if ($this->events->subscriptionExpired($locked)) {
+                    $locked->forceFill(['expiry_notice_sent_at' => now()])->save();
+                }
+            });
 
             return true;
         });

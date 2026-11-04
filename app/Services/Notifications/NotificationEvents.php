@@ -7,11 +7,14 @@ use App\Models\Attendance;
 use App\Models\Booking;
 use App\Models\Child;
 use App\Models\Discount;
+use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\TrainingSession;
 use App\Models\User;
+use App\Models\WaitlistEntry;
 use App\Services\DisplayTimezone;
+use App\Services\SettingStore;
 use Carbon\CarbonImmutable;
 use Closure;
 use DateTimeInterface;
@@ -27,6 +30,7 @@ class NotificationEvents
     public function __construct(
         protected NotificationService $notifications,
         protected DisplayTimezone $timezone,
+        protected SettingStore $settings,
     ) {}
 
     /**
@@ -156,6 +160,118 @@ class NotificationEvents
                 SendDiscountNotification::dispatch($discount);
             }
         });
+    }
+
+    /**
+     * A booking was cancelled by its owner or by staff; the owner is told after the surrounding transaction commits.
+     */
+    public function bookingCancelled(Booking $booking): void
+    {
+        $this->bookingNotice($booking, 'booking_cancelled');
+    }
+
+    /**
+     * An unpaid booking expired; the owner is told after the surrounding transaction commits.
+     */
+    public function bookingExpired(Booking $booking): void
+    {
+        $this->bookingNotice($booking, 'booking_expired');
+    }
+
+    /**
+     * A waitlist seat was offered; the guardian is told after the surrounding transaction commits, with the moment the offer lapses.
+     */
+    public function waitlistOffered(WaitlistEntry $entry): void
+    {
+        $this->afterCommit(function () use ($entry): void {
+            $expiresAt = $entry->offered_at?->copy()->addHours((int) $this->settings->get('academy.waitlist_offer_hours'));
+
+            $this->waitlistNotice($entry, 'waitlist_offered', [
+                'date' => $this->pair($this->localTime($expiresAt), $this->localTime($expiresAt)),
+            ], ['offer_expires_at' => $expiresAt === null ? null : $this->timezone->utcToLocalIso($expiresAt)]);
+        });
+    }
+
+    /**
+     * A waitlist offer lapsed unanswered; the guardian is told after the surrounding transaction commits.
+     */
+    public function waitlistOfferExpired(WaitlistEntry $entry): void
+    {
+        $this->afterCommit(fn () => $this->waitlistNotice($entry, 'waitlist_offer_expired', [], []));
+    }
+
+    /**
+     * An enrollment ended; the guardian is told after the surrounding transaction commits.
+     */
+    public function enrollmentEnded(Enrollment $enrollment): void
+    {
+        $this->afterCommit(function () use ($enrollment): void {
+            $child = $enrollment->child()->with('user')->first();
+
+            if ($child?->user === null) {
+                return;
+            }
+
+            $group = $enrollment->group()->first();
+
+            $this->send($child->user, 'enrollment_ended', 'enrollment_ended', [
+                'child' => $this->pair($child->full_name, $child->full_name),
+                'group' => $this->pair($group?->name_ar, $group?->name_en),
+            ], ['enrollment_id' => $enrollment->id, 'child_id' => $child->id, 'group_id' => $enrollment->group_id]);
+        });
+    }
+
+    /**
+     * An unpaid subscription was dropped for lack of payment; the guardian is told after the surrounding transaction commits.
+     */
+    public function subscriptionUnpaidExpired(Subscription $subscription): void
+    {
+        $this->afterCommit(fn () => $this->subscriptionNotice($subscription, 'subscription_unpaid_expired'));
+    }
+
+    protected function bookingNotice(Booking $booking, string $type): void
+    {
+        $this->afterCommit(function () use ($booking, $type): void {
+            $user = $booking->user_id === null ? null : User::query()->find($booking->user_id);
+
+            if ($user === null) {
+                return;
+            }
+
+            $unit = $booking->unit()->first();
+
+            $this->send($user, $type, $type, [
+                'booking_number' => $this->pair($booking->booking_number, $booking->booking_number),
+                'unit' => $this->pair($unit?->name_ar, $unit?->name_en),
+                'time' => $this->pair($this->localTime($booking->starts_at), $this->localTime($booking->starts_at)),
+            ], ['booking_id' => $booking->id]);
+        });
+    }
+
+    /**
+     * @param  array<string, array{ar: string, en: string}>  $extraReplace
+     * @param  array<string, mixed>  $extraData
+     */
+    protected function waitlistNotice(WaitlistEntry $entry, string $type, array $extraReplace, array $extraData): void
+    {
+        $child = $entry->child()->with('user')->first();
+
+        if ($child?->user === null) {
+            return;
+        }
+
+        $group = $entry->group()->first();
+
+        $this->send($child->user, $type, $type, [
+            'child' => $this->pair($child->full_name, $child->full_name),
+            'group' => $this->pair($group?->name_ar, $group?->name_en),
+            ...$extraReplace,
+        ], [
+            'waitlist_entry_id' => $entry->id,
+            'group_id' => $entry->group_id,
+            'child_id' => $child->id,
+            ...$extraData,
+        ]);
     }
 
     protected function subscriptionNotice(Subscription $subscription, string $type): bool
