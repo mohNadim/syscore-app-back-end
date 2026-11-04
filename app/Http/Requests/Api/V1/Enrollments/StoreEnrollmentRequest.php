@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Api\V1\Enrollments;
 
+use App\Models\Subscription;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreEnrollmentRequest extends FormRequest
 {
@@ -25,6 +27,7 @@ class StoreEnrollmentRequest extends FormRequest
         return [
             'child_id' => ['bail', 'required', 'integer', 'exists:children,id'],
             'group_id' => ['bail', 'required', 'integer', 'exists:academy_groups,id'],
+            'payment_method' => ['bail', 'nullable', 'string', Rule::in(Subscription::PAYMENT_METHODS)],
         ];
     }
 
@@ -42,6 +45,8 @@ class StoreEnrollmentRequest extends FormRequest
             'group_id.required' => __('enrollments.validation.group_id_invalid'),
             'group_id.integer' => __('enrollments.validation.group_id_invalid'),
             'group_id.exists' => __('enrollments.validation.group_id_invalid'),
+            'payment_method.string' => __('enrollments.validation.payment_method_invalid'),
+            'payment_method.in' => __('enrollments.validation.payment_method_invalid'),
         ];
     }
 }

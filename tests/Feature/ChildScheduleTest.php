@@ -141,6 +141,22 @@ class ChildScheduleTest extends TestCase
             ->assertJsonPath('errors.to.0', 'The date range cannot be longer than 62 days.');
     }
 
+    public function test_excused_is_not_an_absence_in_the_summary(): void
+    {
+        $this->mark($this->makeSession('2026-10-20 13:00:00'), 'present');
+        $this->mark($this->makeSession('2026-10-22 13:00:00'), 'absent');
+        $this->mark($this->makeSession('2026-10-24 13:00:00'), 'excused');
+
+        $this->getJson("/api/v1/children/{$this->child->id}/attendance")
+            ->assertOk()
+            ->assertJsonPath('data.0.status', 'excused')
+            ->assertJsonPath('summary.present', 1)
+            ->assertJsonPath('summary.absent', 1)
+            ->assertJsonPath('summary.excused', 1)
+            ->assertJsonPath('summary.total', 2)
+            ->assertJsonPath('summary.attendance_rate', 50);
+    }
+
     public function test_attendance_lists_records_newest_first_with_a_summary(): void
     {
         $first = $this->makeSession('2026-10-20 13:00:00');

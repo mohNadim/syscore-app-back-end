@@ -136,6 +136,18 @@ class AdminPaymentTest extends TestCase
         $this->assertTrue($subscription->period_end->eq(now()->addMonth()));
     }
 
+    public function test_cash_at_reception_subscription_is_paid_by_an_admin_cash_payment(): void
+    {
+        $subscription = $this->subscription(['payment_method' => 'cash_at_reception', 'order_number' => 'ENR-000042']);
+
+        $this->postJson(self::URL, ['subscription_id' => $subscription->id, 'amount' => 80000])->assertCreated();
+
+        $subscription->refresh();
+        $this->assertSame('active', $subscription->status);
+        $this->assertSame('cash_at_reception', $subscription->payment_method);
+        $this->assertSame('cash', Payment::query()->firstOrFail()->method);
+    }
+
     public function test_amount_rules_are_enforced(): void
     {
         $booking = Booking::factory()->pendingDeposit()->create(['final_price' => 100000, 'deposit_amount' => 30000]);

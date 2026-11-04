@@ -12,6 +12,7 @@ use App\Http\Resources\WaitlistEntryResource;
 use App\Models\AcademyGroup;
 use App\Models\Child;
 use App\Models\Enrollment;
+use App\Models\Subscription;
 use App\Services\Academies\EnrollmentService;
 use App\Services\Academies\SubscriptionService;
 use App\Services\DisplayTimezone;
@@ -147,7 +148,11 @@ class EnrollmentController extends Controller
         $child = Child::query()->findOrFail($request->integer('child_id'));
         Gate::authorize('view', $child);
 
-        $result = $enrollments->enroll($child, AcademyGroup::query()->findOrFail($request->integer('group_id')));
+        $result = $enrollments->enroll(
+            $child,
+            AcademyGroup::query()->findOrFail($request->integer('group_id')),
+            paymentMethod: $request->input('payment_method') ?? Subscription::PAYMENT_METHOD_SHAM_CASH,
+        );
 
         if ($result->isEnrolled()) {
             return response()->json([

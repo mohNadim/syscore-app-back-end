@@ -25,7 +25,7 @@ class UpdateAttendanceRequest extends FormRequest
         return [
             'records' => ['bail', 'required', 'array', 'min:1', 'max:200'],
             'records.*.child_id' => ['bail', 'required', 'integer', 'distinct'],
-            'records.*.status' => ['bail', 'required', 'in:present,absent'],
+            'records.*.status' => ['bail', 'required', 'in:present,absent,excused'],
         ];
     }
 

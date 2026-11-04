@@ -79,6 +79,41 @@ class EnrollmentsTest extends TestCase
         $this->assertTrue(AuditLog::query()->where('action', 'enrollment.created')->where('entity_id', $enrollment->id)->where('actor_user_id', $this->user->id)->exists());
     }
 
+    public function test_cash_at_reception_enrollment_holds_the_seat_with_an_order_number(): void
+    {
+        $child = $this->child();
+
+        $response = $this->postJson('/api/v1/enrollments', [...$this->payload($child), 'payment_method' => 'cash_at_reception'])
+            ->assertCreated()
+            ->assertJsonPath('data.latest_subscription.status', 'pending_payment')
+            ->assertJsonPath('data.latest_subscription.payment_method', 'cash_at_reception');
+
+        $subscription = Subscription::query()->firstOrFail();
+        $this->assertSame('ENR-'.str_pad((string) $subscription->id, 6, '0', STR_PAD_LEFT), $subscription->order_number);
+        $response->assertJsonPath('data.latest_subscription.order_number', $subscription->order_number);
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame(1, $this->group->enrollments()->where('status', 'active')->count());
+    }
+
+    public function test_default_enrollment_is_sham_cash_without_an_order_number(): void
+    {
+        $this->postJson('/api/v1/enrollments', $this->payload($this->child()))
+            ->assertCreated()
+            ->assertJsonPath('data.latest_subscription.payment_method', 'sham_cash')
+            ->assertJsonPath('data.latest_subscription.order_number', null);
+    }
+
+    public function test_unknown_payment_method_is_rejected_in_both_languages(): void
+    {
+        $this->postJson('/api/v1/enrollments', [...$this->payload($this->child()), 'payment_method' => 'bitcoin'])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.payment_method.0', __('enrollments.validation.payment_method_invalid', [], 'ar'));
+
+        $this->withHeader('Accept-Language', 'en')
+            ->postJson('/api/v1/enrollments', [...$this->payload($this->child()), 'payment_method' => 'bitcoin'])
+            ->assertJsonPath('errors.payment_method.0', 'The payment method must be sham_cash or cash_at_reception.');
+    }
+
     public function test_subscription_price_includes_the_users_discount(): void
     {
         $category = UserCategory::factory()->create();

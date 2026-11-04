@@ -76,12 +76,14 @@ class ChildScheduleController extends Controller
 
         $present = (int) ($counts['present'] ?? 0);
         $absent = (int) ($counts['absent'] ?? 0);
+        $excused = (int) ($counts['excused'] ?? 0);
         $total = $present + $absent;
 
         return AttendanceResource::collection($records)->additional([
             'summary' => [
                 'present' => $present,
                 'absent' => $absent,
+                'excused' => $excused,
                 'total' => $total,
                 'attendance_rate' => $total > 0 ? round($present / $total * 100, 1) : null,
             ],

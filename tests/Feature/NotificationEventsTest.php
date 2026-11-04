@@ -188,6 +188,17 @@ class NotificationEventsTest extends TestCase
         $this->assertNotNull($staff);
     }
 
+    public function test_marking_a_child_excused_sends_no_absence_notification(): void
+    {
+        $this->actingAsStaffWith(['attendance.manage']);
+        [$child, $group] = $this->enrolledChild();
+        $session = TrainingSession::factory()->create(['group_id' => $group->id, 'starts_at' => '2026-10-26 05:00:00', 'ends_at' => '2026-10-26 06:30:00']);
+
+        $this->putJson("/api/v1/admin/sessions/{$session->id}/attendance", ['records' => [['child_id' => $child->id, 'status' => 'excused']]])->assertOk();
+
+        $this->assertSame(0, Notification::query()->where('type', 'child_absent')->count());
+    }
+
     public function test_a_failing_notifier_does_not_break_the_main_action(): void
     {
         $this->actingAsStaffWith(['attendance.manage']);

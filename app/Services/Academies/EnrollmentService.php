@@ -7,6 +7,7 @@ use App\Models\AcademyGroup;
 use App\Models\Child;
 use App\Models\Enrollment;
 use App\Models\Staff;
+use App\Models\Subscription;
 use App\Models\WaitlistEntry;
 use App\Services\AuditLogger;
 use App\Services\DisplayTimezone;
@@ -122,9 +123,9 @@ class EnrollmentService
      * @throws ConflictHttpException when the child is already enrolled or already waiting
      * @throws BusinessRuleException when the child's offer is older than the offer window (code: waitlist_offer_expired)
      */
-    public function enroll(Child $child, AcademyGroup $group, ?Staff $staff = null, bool $overrideCapacity = false): EnrollResult
+    public function enroll(Child $child, AcademyGroup $group, ?Staff $staff = null, bool $overrideCapacity = false, string $paymentMethod = Subscription::PAYMENT_METHOD_SHAM_CASH): EnrollResult
     {
-        return DB::transaction(function () use ($child, $group, $staff, $overrideCapacity): EnrollResult {
+        return DB::transaction(function () use ($child, $group, $staff, $overrideCapacity, $paymentMethod): EnrollResult {
             $locked = AcademyGroup::query()->lockForUpdate()->findOrFail($group->id);
 
             $reason = $this->ineligibilityReason($child, $locked);
@@ -158,7 +159,7 @@ class EnrollmentService
                 $entry->update(['status' => 'enrolled']);
             }
 
-            return new EnrollResult(enrollment: $this->createEnrollment($child, $locked, $staff));
+            return new EnrollResult(enrollment: $this->createEnrollment($child, $locked, $staff, $paymentMethod));
         });
     }
 
@@ -311,7 +312,7 @@ class EnrollmentService
     /**
      * Create the active enrollment with its first, unpaid subscription priced now.
      */
-    protected function createEnrollment(Child $child, AcademyGroup $group, ?Staff $staff): Enrollment
+    protected function createEnrollment(Child $child, AcademyGroup $group, ?Staff $staff, string $paymentMethod): Enrollment
     {
         $enrollment = Enrollment::create([
             'child_id' => $child->id,
@@ -329,7 +330,12 @@ class EnrollmentService
             'discount_id' => $quote->discount?->id,
             'discount_amount' => $quote->discountAmount,
             'final_price' => $quote->finalPrice,
+            'payment_method' => $paymentMethod,
         ]);
+
+        if ($paymentMethod === Subscription::PAYMENT_METHOD_CASH_AT_RECEPTION) {
+            $subscription->update(['order_number' => 'ENR-'.str_pad((string) $subscription->id, 6, '0', STR_PAD_LEFT)]);
+        }
 
         $this->audit->log('enrollment.created', $enrollment, null, [
             ...$enrollment->only(['child_id', 'group_id', 'status']),

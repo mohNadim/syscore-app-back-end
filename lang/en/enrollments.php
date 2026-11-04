@@ -26,6 +26,7 @@ return [
     ],
 
     'validation' => [
+        'payment_method_invalid' => 'The payment method must be sham_cash or cash_at_reception.',
         'child_id_invalid' => 'The child must be the id of an existing child.',
         'group_id_invalid' => 'The group must be the id of an existing academy group.',
         'status_invalid' => 'The status must be one of: active, ended, cancelled.',

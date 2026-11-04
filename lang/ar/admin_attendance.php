@@ -16,7 +16,7 @@ return [
         'child_id_invalid' => 'يجب أن يكون الطفل رقماً صحيحاً.',
         'child_id_duplicate' => 'لا يمكن تكرار الطفل نفسه.',
         'status_required' => 'حالة الحضور مطلوبة في كل سجل.',
-        'status_invalid' => 'يجب أن تكون الحالة حاضر أو غائب (present أو absent).',
+        'status_invalid' => 'يجب أن تكون الحالة حاضر أو غائب أو غائب بعذر (present أو absent أو excused).',
     ],
 
 ];
