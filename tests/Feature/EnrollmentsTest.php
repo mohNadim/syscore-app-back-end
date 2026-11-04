@@ -10,6 +10,7 @@ use App\Models\Discount;
 use App\Models\Enrollment;
 use App\Models\GroupSchedule;
 use App\Models\Staff;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\UserCategory;
 use App\Models\WaitlistEntry;
@@ -366,5 +367,144 @@ class EnrollmentsTest extends TestCase
         $this->postJson('/api/v1/enrollments', [])->assertForbidden();
         $this->getJson('/api/v1/enrollments')->assertForbidden();
         $this->getJson('/api/v1/waitlist')->assertForbidden();
+    }
+
+    private function enrollmentOf(Child $child, bool $paid = true): Enrollment
+    {
+        $enrollment = Enrollment::factory()->create(['child_id' => $child->id, 'group_id' => $this->group->id]);
+        ($paid ? Subscription::factory()->active() : Subscription::factory())->create(['enrollment_id' => $enrollment->id]);
+
+        return $enrollment;
+    }
+
+    public function test_owner_can_show_an_enrollment_and_others_get_not_found(): void
+    {
+        $enrollment = $this->enrollmentOf($this->child());
+        $foreign = $this->enrollmentOf($this->child(owner: User::factory()->create()));
+
+        $this->getJson("/api/v1/enrollments/{$enrollment->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $enrollment->id)
+            ->assertJsonPath('data.latest_subscription.status', 'active')
+            ->assertJsonPath('data.group.id', $this->group->id);
+        $this->getJson("/api/v1/enrollments/{$foreign->id}")->assertNotFound();
+    }
+
+    public function test_cancelling_a_paid_enrollment_schedules_the_end_and_undo_reverts_it(): void
+    {
+        $enrollment = $this->enrollmentOf($this->child());
+        $periodEnd = $enrollment->latestSubscription->period_end;
+        $renewal = Subscription::factory()->create(['enrollment_id' => $enrollment->id]);
+
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/cancel")
+            ->assertOk()
+            ->assertJsonPath('message', __('enrollments.cancellation_scheduled', [], 'ar'))
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.ends_at_period_end', true);
+
+        $this->assertTrue($enrollment->fresh()->ended_at->eq($periodEnd));
+        $this->assertSame('cancelled', $renewal->fresh()->status);
+        $this->assertTrue(AuditLog::query()->where('action', 'subscription.cancellation_scheduled')->exists());
+
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/cancel")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'enrollment_already_cancelling');
+
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/undo-cancel")
+            ->assertOk()
+            ->assertJsonPath('message', __('enrollments.cancellation_undone', [], 'ar'))
+            ->assertJsonPath('data.ends_at_period_end', false)
+            ->assertJsonPath('data.ended_at', null);
+
+        $this->assertNull($enrollment->fresh()->ended_at);
+        $this->assertTrue(AuditLog::query()->where('action', 'enrollment.cancellation_undone')->exists());
+
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/undo-cancel")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'enrollment_not_cancelling');
+    }
+
+    public function test_cancelling_an_unpaid_enrollment_cancels_it_now_and_frees_the_seat(): void
+    {
+        $enrollment = $this->enrollmentOf($this->child(), paid: false);
+        $this->group->update(['capacity' => 1]);
+
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/cancel")
+            ->assertOk()
+            ->assertJsonPath('message', __('enrollments.cancelled', [], 'ar'))
+            ->assertJsonPath('data.status', 'cancelled');
+
+        $this->assertSame(1, app(EnrollmentService::class)->seatsLeft($this->group->fresh()));
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/cancel")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'enrollment_not_cancellable');
+        $this->postJson("/api/v1/enrollments/{$enrollment->id}/undo-cancel")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'enrollment_not_cancelling');
+    }
+
+    public function test_other_parents_enrollment_cannot_be_cancelled(): void
+    {
+        $foreign = $this->enrollmentOf($this->child(owner: User::factory()->create()));
+
+        $this->postJson("/api/v1/enrollments/{$foreign->id}/cancel")->assertNotFound();
+        $this->postJson("/api/v1/enrollments/{$foreign->id}/undo-cancel")->assertNotFound();
+    }
+
+    public function test_expired_waitlist_offer_cannot_be_accepted(): void
+    {
+        $this->group->update(['capacity' => 1]);
+        $child = $this->child();
+        $entry = WaitlistEntry::factory()->create(['group_id' => $this->group->id, 'child_id' => $child->id, 'status' => 'offered', 'offered_at' => now()->subHours(25)]);
+
+        $this->postJson('/api/v1/enrollments', $this->payload($child))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'waitlist_offer_expired')
+            ->assertJsonPath('message', __('enrollments.waitlist_offer_expired', [], 'ar'));
+        $this->postJson("/api/v1/waitlist/{$entry->id}/accept")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'waitlist_offer_expired');
+
+        $this->assertSame('offered', $entry->fresh()->status);
+        $this->assertSame(0, Enrollment::query()->count());
+    }
+
+    public function test_accepting_an_offer_through_the_waitlist_endpoint_enrolls_the_child(): void
+    {
+        $this->group->update(['capacity' => 1]);
+        $child = $this->child();
+        Enrollment::factory()->create(['group_id' => $this->group->id]);
+        $entry = WaitlistEntry::factory()->create(['group_id' => $this->group->id, 'child_id' => $child->id, 'status' => 'offered', 'offered_at' => now()->subHours(2)]);
+
+        $this->postJson("/api/v1/waitlist/{$entry->id}/accept")
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.child_id', $child->id);
+
+        $this->assertSame('enrolled', $entry->fresh()->status);
+        $this->postJson("/api/v1/waitlist/{$entry->id}/accept")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'waitlist_offer_not_available');
+    }
+
+    public function test_accepting_someone_elses_offer_is_not_found(): void
+    {
+        $entry = WaitlistEntry::factory()->create(['status' => 'offered', 'offered_at' => now()]);
+
+        $this->postJson("/api/v1/waitlist/{$entry->id}/accept")->assertNotFound();
+    }
+
+    public function test_eligible_groups_expose_the_expected_waitlist_position(): void
+    {
+        $this->group->update(['capacity' => 1]);
+        $child = $this->child();
+        Enrollment::factory()->create(['group_id' => $this->group->id]);
+        WaitlistEntry::factory()->count(2)->create(['group_id' => $this->group->id, 'status' => 'waiting']);
+        WaitlistEntry::factory()->create(['group_id' => $this->group->id, 'status' => 'removed']);
+
+        $this->getJson("/api/v1/children/{$child->id}/eligible-groups")
+            ->assertOk()
+            ->assertJsonPath('data.0.is_full', true)
+            ->assertJsonPath('data.0.expected_position', 3);
     }
 }

@@ -9,6 +9,14 @@ return [
     'not_eligible' => 'لا يمكن للطفل الانضمام إلى هذه المجموعة: :reason.',
     'waitlist_left' => 'تمت إزالة الطفل من قائمة الانتظار.',
     'waitlist_not_removable' => 'لا يمكن إزالة هذا الطلب من قائمة الانتظار بعد الآن.',
+    'waitlist_offer_expired' => 'انتهت صلاحية هذا العرض من قائمة الانتظار.',
+    'waitlist_offer_not_available' => 'لا يوجد عرض مفتوح لهذا الطلب في قائمة الانتظار.',
+    'cancelled' => 'تم إلغاء التسجيل.',
+    'cancellation_scheduled' => 'تبقى فترتك المدفوعة سارية وسينتهي التسجيل عند انقضائها.',
+    'cancellation_undone' => 'تم التراجع عن الإلغاء المجدول. يستمر التسجيل.',
+    'enrollment_not_cancellable' => 'لا يمكن إلغاء هذا التسجيل بعد الآن.',
+    'enrollment_already_cancelling' => 'إلغاء هذا التسجيل مجدول بالفعل.',
+    'enrollment_not_cancelling' => 'لا يوجد إلغاء مجدول لهذا التسجيل للتراجع عنه.',
 
     'reasons' => [
         'group_inactive' => 'المجموعة أو الأكاديمية غير نشطة',

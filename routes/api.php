@@ -96,11 +96,15 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
         Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
+        Route::get('enrollments/{enrollment}', [EnrollmentController::class, 'show'])->whereNumber('enrollment')->name('enrollments.show');
+        Route::post('enrollments/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->whereNumber('enrollment')->name('enrollments.cancel');
+        Route::post('enrollments/{enrollment}/undo-cancel', [EnrollmentController::class, 'undoCancel'])->whereNumber('enrollment')->name('enrollments.undo-cancel');
         Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
         Route::get('subscriptions/{subscription}', [SubscriptionController::class, 'show'])->whereNumber('subscription')->name('subscriptions.show');
         Route::post('subscriptions/{subscription}/renew', [SubscriptionController::class, 'renew'])->whereNumber('subscription')->name('subscriptions.renew');
         Route::post('subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->whereNumber('subscription')->name('subscriptions.cancel');
         Route::get('waitlist', [WaitlistController::class, 'index'])->name('waitlist.index');
+        Route::post('waitlist/{waitlist_entry}/accept', [WaitlistController::class, 'accept'])->whereNumber('waitlist_entry')->name('waitlist.accept');
         Route::delete('waitlist/{waitlist_entry}', [WaitlistController::class, 'destroy'])->whereNumber('waitlist_entry')->name('waitlist.destroy');
 
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');

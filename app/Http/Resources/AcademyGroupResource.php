@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\AcademyGroup;
+use App\Services\Academies\EnrollmentService;
 use App\Services\DisplayTimezone;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,6 +20,9 @@ class AcademyGroupResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $hasSeatCounts = array_key_exists('active_enrollments_count', $this->resource->getAttributes());
+        $seatsLeft = $hasSeatCounts ? app(EnrollmentService::class)->seatsLeft($this->resource) : null;
+
         return [
             'id' => $this->id,
             'academy_id' => $this->academy_id,
@@ -31,6 +35,9 @@ class AcademyGroupResource extends JsonResource
             'age_max' => $this->age_max,
             'gender' => $this->gender,
             'capacity' => $this->capacity,
+            'seats_left' => $this->when($hasSeatCounts, $seatsLeft),
+            'is_full' => $this->when($hasSeatCounts, $seatsLeft !== null && $seatsLeft <= 0),
+            'expected_position' => $this->when($hasSeatCounts, fn () => $seatsLeft <= 0 ? app(EnrollmentService::class)->expectedPosition($this->resource) : null),
             'level' => $this->level,
             'level_ar' => $this->level_ar ?? $this->level,
             'level_en' => $this->level_en,

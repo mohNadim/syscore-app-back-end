@@ -17,4 +17,12 @@ class WaitlistEntryPolicy
             ? Response::allow()
             : Response::denyAsNotFound();
     }
+
+    /**
+     * Determine whether the user can accept the offer made to one of their own children.
+     */
+    public function accept(User $user, WaitlistEntry $waitlistEntry): Response
+    {
+        return $this->delete($user, $waitlistEntry);
+    }
 }
