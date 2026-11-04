@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['type', 'name_ar', 'name_en', 'description_ar', 'description_en', 'sort_order', 'is_active'])]
+#[Fillable(['type', 'name_ar', 'name_en', 'description_ar', 'description_en', 'images', 'sort_order', 'is_active'])]
 class Facility extends Model
 {
     /** @use HasFactory<FacilityFactory> */
@@ -67,6 +67,7 @@ class Facility extends Model
     protected function casts(): array
     {
         return [
+            'images' => 'array',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];

@@ -12,6 +12,8 @@ use App\Models\GalleryAlbum;
 use App\Models\GalleryPhoto;
 use App\Models\GroupSchedule;
 use App\Models\News;
+use App\Models\OperatingHour;
+use App\Models\PriceRule;
 use App\Models\Setting;
 use App\Models\Space;
 use App\Models\Sport;
@@ -50,6 +52,37 @@ class PublicCatalogTest extends TestCase
             ->assertJsonCount(1, 'data.1.units')
             ->assertJsonCount(1, 'data.1.units.0.sports')
             ->assertJsonCount(1, 'data.1.spaces');
+    }
+
+    public function test_facility_exposes_images_price_from_and_opening_hours(): void
+    {
+        $facility = Facility::factory()->create(['images' => ['https://example.com/a.jpg', 'https://example.com/b.jpg']]);
+        $unit = BookableUnit::factory()->create(['facility_id' => $facility->id]);
+        $inactiveUnit = BookableUnit::factory()->inactive()->create(['facility_id' => $facility->id]);
+        PriceRule::factory()->create(['unit_id' => $unit->id, 'price_per_hour' => 90000]);
+        PriceRule::factory()->create(['unit_id' => $unit->id, 'price_per_hour' => 60000]);
+        PriceRule::factory()->create(['unit_id' => $unit->id, 'price_per_hour' => 10000, 'valid_to' => '2020-01-01']);
+        PriceRule::factory()->create(['unit_id' => $inactiveUnit->id, 'price_per_hour' => 5000]);
+        OperatingHour::factory()->create(['facility_id' => $facility->id, 'weekday' => 2, 'open_time' => '10:00:00', 'close_time' => '20:00:00']);
+        OperatingHour::factory()->create(['facility_id' => $facility->id, 'weekday' => 1, 'open_time' => '08:00:00', 'close_time' => '22:00:00']);
+        $bare = Facility::factory()->create(['sort_order' => 5, 'images' => null]);
+
+        $this->getJson("/api/v1/facilities/{$facility->id}")->assertOk()
+            ->assertJsonPath('data.images', ['https://example.com/a.jpg', 'https://example.com/b.jpg'])
+            ->assertJsonPath('data.cover_image', 'https://example.com/a.jpg')
+            ->assertJsonPath('data.price_from', 60000)
+            ->assertJsonPath('data.price_unit', 'hour')
+            ->assertJsonPath('data.currency', 'SYP')
+            ->assertJsonPath('data.opening_hours.0', ['weekday' => 1, 'open_time' => '08:00', 'close_time' => '22:00'])
+            ->assertJsonPath('data.opening_hours.1.weekday', 2);
+
+        $list = $this->getJson('/api/v1/facilities')->assertOk();
+        $list->assertJsonPath('data.0.price_from', 60000);
+        $list->assertJsonPath('data.1.id', $bare->id)
+            ->assertJsonPath('data.1.images', [])
+            ->assertJsonPath('data.1.cover_image', null)
+            ->assertJsonPath('data.1.price_from', null)
+            ->assertJsonPath('data.1.opening_hours', []);
     }
 
     public function test_facility_show_hides_inactive_facility(): void
