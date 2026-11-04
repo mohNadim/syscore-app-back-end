@@ -39,7 +39,7 @@ class UserController extends Controller
                 fn ($inner) => $inner->where('user_categories.id', $request->integer('category_id')),
             ))
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return AdminUserResource::collection($users);
     }

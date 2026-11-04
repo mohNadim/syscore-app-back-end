@@ -30,7 +30,7 @@ class AdminAnnouncementResource extends JsonResource
             'body_en' => $this->body_en,
             'sent_by_staff_id' => $this->sent_by_staff_id,
             'sent_at' => $this->sent_at ? app(DisplayTimezone::class)->utcToLocalIso($this->sent_at) : null,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
             $this->mergeWhen(isset($this->notifications_count), fn () => [
                 'recipients_count' => (int) $this->notifications_count,
                 'push_sent_count' => (int) $this->push_sent_notifications_count,

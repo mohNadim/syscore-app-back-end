@@ -103,7 +103,7 @@ class UserCategoryController extends Controller
         $members = $userCategory->users()
             ->orderBy('users.full_name')
             ->orderBy('users.id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return UserResource::collection($members);
     }

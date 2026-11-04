@@ -22,7 +22,7 @@ class NewsController extends Controller
         $news = News::query()
             ->when($request->filled('is_published'), fn ($query) => $query->where('is_published', $request->boolean('is_published')))
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return AdminNewsResource::collection($news);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Bookings;
 
+use App\Exceptions\BusinessRuleException;
 use App\Models\BookableUnit;
 use App\Models\Booking;
 use App\Models\Staff;
@@ -142,7 +143,7 @@ class BookingService
     /**
      * Cancel a booking for a customer or for staff.
      *
-     * @throws UnprocessableEntityHttpException when the booking can no longer be cancelled by this actor
+     * @throws BusinessRuleException when the booking can no longer be cancelled by this actor (codes: not_cancellable, cancellation_deadline_passed)
      */
     public function cancel(Booking $booking, ?User $byUser, ?Staff $byStaff, ?string $reason): Booking
     {
@@ -152,7 +153,7 @@ class BookingService
             $problem = $this->cancellationProblem($locked, $byStaff !== null);
 
             if ($problem !== null) {
-                throw new UnprocessableEntityHttpException(__('bookings.'.$problem));
+                throw new BusinessRuleException($problem, __('bookings.'.$problem));
             }
 
             $before = ['status' => $locked->status];

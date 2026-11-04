@@ -51,7 +51,7 @@ class BookingController extends Controller
             ->when($request->filled('booking_number'), fn ($query) => $query->where('booking_number', 'like', '%'.addcslashes($request->string('booking_number')->toString(), '%_\\').'%'))
             ->orderBy('starts_at')
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return BookingResource::collection($bookings);
     }

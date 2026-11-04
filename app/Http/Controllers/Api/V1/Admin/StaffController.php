@@ -33,7 +33,7 @@ class StaffController extends Controller
             ->when($request->validated('is_active') !== null, fn ($query) => $query->where('is_active', $request->boolean('is_active')))
             ->orderBy('full_name')
             ->orderBy('id')
-            ->paginate((int) ($request->validated('per_page') ?? 15));
+            ->paginate((int) ($request->validated('per_page') ?? 15))->withQueryString();
 
         return StaffResource::collection($staff);
     }

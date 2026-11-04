@@ -32,7 +32,7 @@ class ClosureResource extends JsonResource
             'reason_ar' => $this->reason_ar,
             'reason_en' => $this->reason_en,
             'created_by_staff_id' => $this->created_by_staff_id,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

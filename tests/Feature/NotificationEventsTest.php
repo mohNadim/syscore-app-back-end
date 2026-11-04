@@ -248,7 +248,7 @@ class NotificationEventsTest extends TestCase
 
         $this->artisan('bookings:send-reminders')->expectsOutput('Sent 0 booking reminders.')->assertSuccessful();
 
-        Setting::query()->create(['key' => 'academy.booking_reminder_hours', 'value' => 6]);
+        Setting::query()->create(['key' => 'booking.reminder_minutes_before', 'value' => 360]);
 
         $this->artisan('bookings:send-reminders')->expectsOutput('Sent 1 booking reminders.')->assertSuccessful();
         $this->assertNotNull($inside->refresh()->reminder_sent_at);
@@ -263,7 +263,7 @@ class NotificationEventsTest extends TestCase
         $this->artisan('subscriptions:send-expiry-notices')->assertSuccessful();
         $this->assertNull($near->refresh()->reminder_7d_sent_at);
 
-        Setting::query()->create(['key' => 'academy.subscription_expiry_notice_days', 'value' => 14]);
+        Setting::query()->create(['key' => 'subscription.expiry_reminder_days', 'value' => 14]);
 
         $this->artisan('subscriptions:send-expiry-notices')->assertSuccessful();
         $this->artisan('subscriptions:send-expiry-notices')->assertSuccessful();

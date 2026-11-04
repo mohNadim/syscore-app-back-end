@@ -29,7 +29,7 @@ class AdminNewsResource extends JsonResource
             'is_published' => $this->is_published,
             'published_at' => $this->published_at ? app(DisplayTimezone::class)->utcToLocalIso($this->published_at) : null,
             'created_by_staff_id' => $this->created_by_staff_id,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

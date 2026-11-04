@@ -28,7 +28,7 @@ class NewsResource extends JsonResource
             'cover_url' => $this->cover_url,
             'is_published' => $this->is_published,
             'published_at' => $this->published_at ? app(DisplayTimezone::class)->utcToLocalIso($this->published_at) : null,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? app(DisplayTimezone::class)->utcToLocalIso($this->created_at) : null,
         ];
     }
 }

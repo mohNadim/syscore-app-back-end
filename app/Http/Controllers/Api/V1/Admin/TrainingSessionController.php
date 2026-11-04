@@ -38,7 +38,7 @@ class TrainingSessionController extends Controller
             ->when($request->filled('to'), fn ($query) => $query->where('starts_at', '<=', $timezone->dayEndUtc($request->string('to')->toString())))
             ->orderBy('starts_at')
             ->orderBy('id')
-            ->paginate($request->integer('per_page', 15));
+            ->paginate($request->integer('per_page', 15))->withQueryString();
 
         return TrainingSessionResource::collection($sessions);
     }
