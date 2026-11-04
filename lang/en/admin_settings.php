@@ -12,6 +12,7 @@ return [
         'deposit_deadline_minutes' => 'The deposit deadline must be a whole number of minutes from 5 to 1440.',
         'cancellation_deadline_hours' => 'The cancellation deadline must be a whole number of hours from 0 to 168.',
         'reminder_minutes_before' => 'The booking reminder lead time must be a whole number of minutes from 1 to 4320.',
+        'cash_only_enabled' => 'The cash-at-the-facility option must be true or false.',
         'otp_channel' => 'The verification channel must be one of: sms, whatsapp, telegram.',
         'otp_ttl_minutes' => 'The code validity must be a whole number of minutes from 1 to 30.',
         'otp_max_attempts' => 'The maximum attempts must be a whole number from 1 to 10.',

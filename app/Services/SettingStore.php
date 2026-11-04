@@ -9,7 +9,7 @@ class SettingStore
     /**
      * Default application settings keyed by setting key; also the list of every known key.
      *
-     * @var array<string, int|string|array{phone: string|null, whatsapp: string|null, address_ar: string|null, address_en: string|null}>
+     * @var array<string, int|string|bool|array{phone: string|null, whatsapp: string|null, address_ar: string|null, address_en: string|null}>
      */
     public const DEFAULTS = [
         'booking.advance_window_days' => 14,
@@ -18,6 +18,7 @@ class SettingStore
         'booking.deposit_deadline_minutes' => 60,
         'booking.cancellation_deadline_hours' => 24,
         'booking.reminder_minutes_before' => 120,
+        'booking.cash_only_enabled' => true,
         'otp.channel' => 'sms',
         'otp.ttl_minutes' => 5,
         'otp.max_attempts' => 5,

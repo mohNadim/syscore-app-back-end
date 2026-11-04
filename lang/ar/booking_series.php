@@ -17,7 +17,7 @@ return [
         'last_before_first' => 'تاريخ النهاية لا يمكن أن يسبق تاريخ البداية.',
         'first_date_past' => 'تاريخ البداية لا يمكن أن يكون في الماضي.',
         'outside_booking_window' => 'تاريخ النهاية بعيد جداً. يرجى اختيار تاريخ أقرب.',
-        'payment_mode_invalid' => 'طريقة الدفع يجب أن تكون إحدى القيم: online_full، deposit_then_cash.',
+        'payment_mode_invalid' => 'طريقة الدفع يجب أن تكون إحدى القيم: online_full، deposit_then_cash، cash_only.',
         'skip_unavailable_invalid' => 'خيار التخطي يجب أن يكون true أو false.',
         'per_page_invalid' => 'حجم الصفحة يجب أن يكون عدداً صحيحاً بين 1 و 100.',
         'reason_invalid' => 'السبب يجب أن يكون نصاً لا يزيد عن 255 حرفاً.',

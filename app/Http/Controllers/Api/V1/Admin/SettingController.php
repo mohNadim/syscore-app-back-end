@@ -71,6 +71,10 @@ class SettingController extends Controller
             return $merged;
         }
 
+        if (is_bool(SettingStore::DEFAULTS[$key])) {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+
         return is_int(SettingStore::DEFAULTS[$key]) ? (int) $value : $value;
     }
 

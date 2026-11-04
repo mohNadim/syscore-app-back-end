@@ -129,6 +129,50 @@ class AvailabilityService
     }
 
     /**
+     * The earliest still-future available slot of every active unit today (display timezone), earliest first.
+     *
+     * Runs one grid computation per active facility (not per unit), so opening hours, closures, reservations
+     * and prices are honoured exactly as in the daily grid.
+     *
+     * @return list<array{facility: array{id: int, name_ar: string, name_en: string|null}, unit: array{id: int, code: string|null, name_ar: string, name_en: string|null}, starts_at: string, ends_at: string, base_price: int|null}>
+     */
+    public function nearestToday(?int $facilityId, ?int $sportId, int $limit): array
+    {
+        $today = CarbonImmutable::now($this->timezone->name())->startOfDay();
+        $durationMinutes = (int) $this->settings->get('booking.slot_minutes');
+
+        $facilities = Facility::query()
+            ->where('is_active', true)
+            ->when($facilityId !== null, fn ($query) => $query->whereKey($facilityId))
+            ->orderBy('id')
+            ->get();
+
+        $items = [];
+
+        foreach ($facilities as $facility) {
+            foreach ($this->forFacilityDay($facility, $today, $sportId, $durationMinutes)['units'] as $unit) {
+                $slot = collect($unit['slots'])->firstWhere('status', 'available');
+
+                if ($slot === null) {
+                    continue;
+                }
+
+                $items[] = [
+                    'facility' => ['id' => $facility->id, 'name_ar' => $facility->name_ar, 'name_en' => $facility->name_en],
+                    'unit' => ['id' => $unit['id'], 'code' => $unit['code'], 'name_ar' => $unit['name_ar'], 'name_en' => $unit['name_en']],
+                    'starts_at' => $slot['starts_at'],
+                    'ends_at' => $slot['ends_at'],
+                    'base_price' => $slot['base_price'],
+                ];
+            }
+        }
+
+        usort($items, fn (array $a, array $b): int => [$a['starts_at'], $a['unit']['id']] <=> [$b['starts_at'], $b['unit']['id']]);
+
+        return array_slice($items, 0, $limit);
+    }
+
+    /**
      * The slot start/end moments (UTC) of a day: every slot_minutes from opening while the booking still ends by closing.
      *
      * @return list<array{0: CarbonImmutable, 1: CarbonImmutable}>

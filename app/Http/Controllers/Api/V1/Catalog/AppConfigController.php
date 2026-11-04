@@ -23,6 +23,7 @@ class AppConfigController extends Controller
                 'slot_minutes' => $settings->get('booking.slot_minutes'),
                 'deposit_percent' => $settings->get('booking.deposit_percent'),
                 'deposit_deadline_minutes' => $settings->get('booking.deposit_deadline_minutes'),
+                'payment_options' => array_values(array_filter(['online_full', 'deposit_then_cash', $settings->get('booking.cash_only_enabled') ? 'cash_only' : null])),
                 'cancellation_deadline_hours' => $settings->get('booking.cancellation_deadline_hours'),
             ],
             'otp' => [

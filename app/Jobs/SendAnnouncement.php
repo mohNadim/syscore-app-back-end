@@ -4,10 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Announcement;
 use App\Models\Notification;
-use App\Models\User;
 use App\Services\Notifications\NotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 
 class SendAnnouncement implements ShouldQueue
@@ -34,33 +32,12 @@ class SendAnnouncement implements ShouldQueue
         $title = ['ar' => $announcement->title_ar, 'en' => $announcement->title_en ?? $announcement->title_ar];
         $body = ['ar' => $announcement->body_ar, 'en' => $announcement->body_en ?? $announcement->body_ar];
 
-        $this->recipients($announcement)
+        $announcement->audienceUsers()
             ->whereNotIn('id', Notification::query()->select('user_id')->where('announcement_id', $announcement->id))
             ->chunkById(500, function ($users) use ($notifications, $title, $body, $announcement): void {
                 foreach ($users as $user) {
                     $notifications->notify($user, 'announcement', $title, $body, ['announcement_id' => $announcement->id], $announcement->id);
                 }
             });
-    }
-
-    /**
-     * Active users in the announcement audience: everyone for "all"; for "academy", guardians of active children
-     * with an active enrollment and an active subscription in one of that academy's groups; for "category", members
-     * of the user category; for "users", the explicitly stored recipients.
-     *
-     * @return Builder<User>
-     */
-    private function recipients(Announcement $announcement): Builder
-    {
-        return User::query()
-            ->where('is_active', true)
-            ->when($announcement->audience === 'academy', fn (Builder $query) => $query->whereHas('children', fn (Builder $children) => $children
-                ->where('is_active', true)
-                ->whereHas('enrollments', fn (Builder $enrollments) => $enrollments
-                    ->where('status', 'active')
-                    ->whereHas('group', fn (Builder $group) => $group->where('academy_id', $announcement->academy_id))
-                    ->whereHas('subscriptions', fn (Builder $subscriptions) => $subscriptions->where('status', 'active')))))
-            ->when($announcement->audience === 'category', fn (Builder $query) => $query->whereHas('categories', fn (Builder $categories) => $categories->where('user_categories.id', $announcement->user_category_id)))
-            ->when($announcement->audience === 'users', fn (Builder $query) => $query->whereIn('id', $announcement->recipients()->select('users.id')));
     }
 }

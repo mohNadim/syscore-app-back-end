@@ -4,6 +4,7 @@ return [
 
     'created' => 'تم إنشاء الحجز بنجاح.',
     'cancelled' => 'تم إلغاء الحجز بنجاح.',
+    'payment_option_disabled' => 'خيار الدفع هذا غير متاح حالياً.',
     'slot_taken' => 'تم حجز هذا الوقت للتو من قبل شخص آخر. يرجى اختيار وقت آخر.',
     'not_cancellable' => 'لا يمكن إلغاء هذا الحجز بعد الآن.',
     'cancellation_deadline_passed' => 'انتهت مهلة الإلغاء، تواصل مع الإدارة.',
@@ -17,7 +18,7 @@ return [
         'starts_at_invalid' => 'بداية الحجز مطلوبة بصيغة YYYY-MM-DD HH:MM.',
         'duration_invalid' => 'المدة يجب أن تكون عدداً صحيحاً من الدقائق بين 1 و 600.',
         'duration_not_multiple' => 'المدة يجب أن تكون من مضاعفات :minutes دقيقة وألا تقل عن :minutes دقيقة.',
-        'payment_mode_invalid' => 'طريقة الدفع يجب أن تكون إحدى القيم: online_full، deposit_then_cash.',
+        'payment_mode_invalid' => 'طريقة الدفع يجب أن تكون إحدى القيم: online_full، deposit_then_cash، cash_only.',
         'past_start' => 'بداية الحجز يجب أن تكون في المستقبل.',
         'outside_booking_window' => 'موعد الحجز بعيد جداً. يرجى اختيار تاريخ أقرب.',
         'outside_operating_hours' => 'الحجز يجب أن يكون ضمن ساعات عمل المنشأة لذلك اليوم.',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Availability\NearestAvailabilityRequest;
 use App\Http\Requests\Api\V1\Availability\ShowAvailabilityRequest;
 use App\Services\Reservations\AvailabilityService;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,18 @@ class AvailabilityController extends Controller
             $request->localDate(),
             $request->filled('sport_id') ? $request->integer('sport_id') : null,
             $request->durationMinutes(),
+        )]);
+    }
+
+    /**
+     * List the earliest still-free slot of every active unit today, earliest first. Public.
+     */
+    public function nearest(NearestAvailabilityRequest $request, AvailabilityService $availability): JsonResponse
+    {
+        return response()->json(['data' => $availability->nearestToday(
+            $request->filled('facility_id') ? $request->integer('facility_id') : null,
+            $request->filled('sport_id') ? $request->integer('sport_id') : null,
+            $request->limit(),
         )]);
     }
 }

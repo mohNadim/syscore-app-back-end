@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\V1\Admin\TrainingSessionController;
 use App\Http\Controllers\Api\V1\Admin\UserCategoryController;
 use App\Http\Controllers\Api\V1\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\WaitlistController as AdminWaitlistController;
+use App\Http\Controllers\Api\V1\AnnouncementController as UserAnnouncementController;
 use App\Http\Controllers\Api\V1\AuthOtpController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BookingController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\Api\V1\Catalog\SportController as CatalogSportControlle
 use App\Http\Controllers\Api\V1\ChildController;
 use App\Http\Controllers\Api\V1\ChildScheduleController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\DiscountController as UserDiscountController;
 use App\Http\Controllers\Api\V1\EnrollmentController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -74,6 +76,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('gallery/albums/{album}', [GalleryAlbumController::class, 'show'])->name('gallery.albums.show');
     Route::get('bookings/quote', [BookingQuoteController::class, 'show'])->name('bookings.quote');
     Route::get('availability', [AvailabilityController::class, 'show'])->name('availability.show');
+    Route::get('availability/nearest', [AvailabilityController::class, 'nearest'])->name('availability.nearest');
     Route::get('app-config', [AppConfigController::class, 'show'])->name('app-config.show');
 
     Route::post('webhooks/sham-cash', ShamCashWebhookController::class)->middleware('sham-cash.signature')->name('webhooks.sham-cash');
@@ -125,6 +128,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
         Route::delete('devices', [DeviceController::class, 'destroy'])->name('devices.destroy');
+
+        Route::get('announcements/{announcement}', [UserAnnouncementController::class, 'show'])->whereNumber('announcement')->name('announcements.show');
+        Route::get('discounts', [UserDiscountController::class, 'index'])->name('discounts.index');
+        Route::get('discounts/{discount}', [UserDiscountController::class, 'show'])->whereNumber('discount')->name('discounts.show');
 
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
